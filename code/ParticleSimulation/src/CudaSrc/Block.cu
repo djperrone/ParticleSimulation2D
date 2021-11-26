@@ -3,7 +3,7 @@
 namespace Physics {
 
 
-    __host__ __device__ void push_particle_gpu(Block& b, common::particle_t* particle, int idx) {
+  /*  __host__ __device__ void push_particle_gpu(Block& b, common::particle_t* particle, int idx) {
         b.particles[b.pcount] = particle;
         b.ids[b.pcount] = idx;
         b.pcount++;
@@ -18,5 +18,5 @@ namespace Physics {
         }
 
         b.pcount--;
-    }
+    }*/
 }

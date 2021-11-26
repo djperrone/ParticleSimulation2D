@@ -1,9 +1,10 @@
-//#include "sapch.h"
-//#include <cuda.h>
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-#include "common/common.h"
+#ifndef BLOCK_CUH
+#define BLOCK_CUH
 
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+#include "common/common.h"
 #define MAX_PARTICLES 25
 
 namespace Physics {
@@ -16,7 +17,8 @@ namespace Physics {
 
    /* __host__ __device__ void push_particle_gpu(Block& b, common::particle_t* particle, int idx);
     __host__ __device__ void erase_particle_gpu(Block& b, int idx);*/
-    __host__ __device__ void push_particle_gpu(Block& b, common::particle_t* particle, int idx) {
+    __host__ __device__ void push_particle_gpu(Block& b, common::particle_t* particle, int idx) {      
+        
         b.particles[b.pcount] = particle;
         b.ids[b.pcount] = idx;
         b.pcount++;
@@ -33,3 +35,5 @@ namespace Physics {
         b.pcount--;
     }
 }
+#endif // !Block
+

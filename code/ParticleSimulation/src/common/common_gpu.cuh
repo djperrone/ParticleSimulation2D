@@ -1,36 +1,36 @@
-#ifndef __CS267_COMMON_H__
-#define __CS267_COMMON_H__
-
+#ifndef COMMON_GPU
+#define COMMON_GPU
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
 #include <cstdio>
 
-#define density1 0.0005
-#define mass1    0.01
-#define cutoff1  0.01
-#define min_r1   (cutoff1/100)
-#define dt1      0.0005
-
-namespace common {
+namespace common_gpu {
 
 
 	inline int mymin(int a, int b) { return a < b ? a : b; }
 	inline int mymax(int a, int b) { return a > b ? a : b; }
 
-//#define density 0.0005
-//#define mass    0.01
-//#define cutoff  0.01
-//#define min_r   (cutoff/100)
-//#define dt      0.0005
-	//float dt = 0.005;
-	struct ParticleData
-	{
-		static float density;// = 0.03f;
-		static float mass;// = 0.7f;
-		static float cutoff; //= 0.095f;
-		static float min_r; //= (cutoff / 100);
-		static float dt; //= 0.0005f;
-		static int num_particles;// = 5;
-		static double size;
-	};
+	//#define density 0.0005
+	//#define mass    0.01
+	//#define cutoff  0.01
+	//#define min_r   (cutoff/100)
+	//#define dt      0.0005
+	//float test1 = 0.5f;
+	//__device__ const float test = 0.0f;
+	//struct ParticleData
+	//{
+	//	static float density;// = 0.03f;
+	//	static float mass;// = 0.7f;
+	//	static float cutoff; //= 0.095f;
+	//	static float min_r; //= (cutoff / 100);
+	//	static float dt; //= 0.0005f;
+	//	static int num_particles;// = 5;
+	//	static double size;
+	//};
+	//__constant__ float density = 0.04f;
+	//__constant__ float size = 0.0f;
+	//zstatic ParticleData* pData;
 
 	//__global__ float density;// = 0.03f;
 	//__global__ float mass;// = 0.7f;
@@ -40,10 +40,7 @@ namespace common {
 	//__global__ int num_particles;// = 5;
 	//__global__ double size;
 
-	struct PDataGPU
-	{
-		
-	};
+	
 
 	//
 	//  saving parameters
@@ -93,4 +90,7 @@ namespace common {
 	char* read_string(int argc, char** argv, const char* option, char* default_value);
 
 }
-#endif
+
+
+
+#endif // !COMMON_GPU

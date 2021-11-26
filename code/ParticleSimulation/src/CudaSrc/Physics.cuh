@@ -1,7 +1,11 @@
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-#include "common/common.h"
+#ifndef PHYSICS_CUH
+#define PHYSICS_CUH
+
 #include "Block.cuh"
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+#include "common/common.h"
 
 
 namespace Physics {
@@ -14,3 +18,5 @@ namespace Physics {
 	__global__ void check_move_gpu(Block* grid, int blocks_per_side, double block_size);
 
 }
+
+#endif
