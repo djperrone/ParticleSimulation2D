@@ -1,4 +1,3 @@
-#include "sapch.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -6,32 +5,30 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
-#include <ctime>
+#include "time_of_day.h"
 //#include <sys/time.h>
 #include "common.h"
-#include "time_of_day.h"
 #include <cstdlib>
-#include <glm/glm.hpp>
-
 #include "Novaura/Random.h"
-namespace common {    
-    
-    float ParticleData::density = 0.03f;
-    float ParticleData::mass    =   0.7f;
-    float ParticleData::cutoff = 0.095f;
-    float ParticleData::min_r =  (cutoff/100);
-    float ParticleData::dt    =  0.0005f;
-    int ParticleData::num_particles = 5;
 
-    double size;
+namespace common {
+
+    float ParticleData::density = 0.0005f;
+    float ParticleData::mass = 0.01f;
+    float ParticleData::cutoff = 0.01f;
+    float ParticleData::min_r = (cutoff / 100);
+    float ParticleData::dt = 0.0005f;
+    int ParticleData::num_particles = 5;
+    double ParticleData::size = 0.0;
+
 
     //
     //  tuned constants
     //
 
-//
-//  timer
-//
+    //
+    //  timer
+    //
     double read_timer()
     {
         static bool initialized = false;
@@ -51,7 +48,7 @@ namespace common {
     //
     void set_size(int n)
     {
-        size = sqrt(ParticleData::density * n);
+        ParticleData::size = sqrt(ParticleData::density * n);
     }
 
     //
@@ -59,7 +56,8 @@ namespace common {
     //
     void init_particles(int n, particle_t* p)
     {
-        //srand48(time(NULL));
+
+
         int sx = (int)ceil(sqrt((double)n));
         int sy = (n + sx - 1) / sx;
 
@@ -72,27 +70,22 @@ namespace common {
             //
             //  make sure particles are not spatially sorted
             //
-            //int j = static_cast<int>(Novaura::Random::Uint32(0, (int)glm::pow(2, 31))) % (n - i);
             int j = static_cast<int>(Novaura::Random::Uint32(0, 100000)) % (n - i);
 
-            //int j = lrand48() % (n - i);
             int k = shuffle[j];
             shuffle[j] = shuffle[n - i - 1];
 
             //
             //  distribute particles evenly to ensure proper spacing
             //
-            p[i].x = size * (1. + (k % sx)) / (1 + sx);
-            p[i].y = size * (1. + (k / sx)) / (1 + sy);
+            p[i].x = ParticleData::size * (1. + (k % sx)) / (1 + sx);
+            p[i].y = ParticleData::size * (1. + (k / sx)) / (1 + sy);
 
             //
             //  assign random velocities within a bound
             //
             p[i].vx = Novaura::Random::Float(0.0f, 1.0f) * 2 - 1;
             p[i].vy = Novaura::Random::Float(0.0f, 1.0f) * 2 - 1;
-
-            // p[i].vx = drand48() * 2 - 1;
-             //p[i].vy = drand48() * 2 - 1;
         }
         free(shuffle);
     }
@@ -100,7 +93,7 @@ namespace common {
     //
     //  interact two particles
     //
-    void apply_force(particle_t& particle, particle_t& neighbor, double* dmin, double* davg, int* navg)
+    void apply_force(particle_t& particle, particle_t& neighbor)
     {
 
         double dx = neighbor.x - particle.x;
@@ -108,18 +101,8 @@ namespace common {
         double r2 = dx * dx + dy * dy;
         if (r2 > ParticleData::cutoff * ParticleData::cutoff)
             return;
-        if (r2 != 0)
-        {
-            if (r2 / (ParticleData::cutoff * ParticleData::cutoff) < *dmin * (*dmin))
-                *dmin = sqrt(r2) / ParticleData::cutoff;
-            (*davg) += sqrt(r2) / ParticleData::cutoff;
-            (*navg)++;
-        }
-
         r2 = fmax(r2, ParticleData::min_r * ParticleData::min_r);
         double r = sqrt(r2);
-
-
 
         //
         //  very simple short-range repulsive force
@@ -127,8 +110,6 @@ namespace common {
         double coef = (1 - ParticleData::cutoff / r) / r2 / ParticleData::mass;
         particle.ax += coef * dx;
         particle.ay += coef * dy;
-        //particle.ax *= 0.01;
-        //particle.ay *= 0.01;
     }
 
     //
@@ -140,24 +121,22 @@ namespace common {
         //  slightly simplified Velocity Verlet integration
         //  conserves energy better than explicit Euler method
         //
-        p.vx += p.ax;// * deltaTime * velocity_modifier;
-        p.vy += p.ay;// * deltaTime * velocity_modifier;
-       // p.vx *= 0.95;
-       // p.vy *= 0.95;
-        p.x += p.vx * deltaTime;
-        p.y += p.vy * deltaTime;
+        p.vx += p.ax * ParticleData::dt;
+        p.vy += p.ay * ParticleData::dt;
+        p.x += p.vx * ParticleData::dt;
+        p.y += p.vy * ParticleData::dt;
 
         //
         //  bounce from walls
         //
-        while (p.x < 0 || p.x > size)
+        while (p.x < 0 || p.x > ParticleData::size)
         {
-            p.x = p.x < 0 ? -p.x : 2 * size - p.x;
+            p.x = p.x < 0 ? -p.x : 2 * ParticleData::size - p.x;
             p.vx = -p.vx;
         }
-        while (p.y < 0 || p.y > size)
+        while (p.y < 0 || p.y > ParticleData::size)
         {
-            p.y = p.y < 0 ? -p.y : 2 * size - p.y;
+            p.y = p.y < 0 ? -p.y : 2 * ParticleData::size - p.y;
             p.vy = -p.vy;
         }
     }
@@ -170,7 +149,7 @@ namespace common {
         static bool first = true;
         if (first)
         {
-            fprintf(f, "%d %g\n", n, size);
+            fprintf(f, "%d %g\n", n, ParticleData::size);
             first = false;
         }
         for (int i = 0; i < n; i++)

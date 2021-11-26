@@ -13,12 +13,15 @@ namespace Novaura {
 		const glm::mat4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
 		const glm::mat4& GetViewProjectionMatrix() const { return m_ViewProjectionMatrix; }
 
-		void SetProjectionMatrix(float width, float height);		
+		void SetProjectionMatrix(float width, float height);
+		void SetProjectionMatrix(float left, float right, float bottom, float top);
 		void SetViewMatrix(const glm::vec3& position, float rotation);
 		void SetViewMatrix(const glm::vec3& position);
 		void SetRotation(float rotation) { m_Rotation = rotation; CalcViewMatrix();
 		}
 		void SetPosition(const glm::vec3& position) { m_Position = position; CalcViewMatrix(); }
+
+		inline float GetAspectRatio() { return m_AspectRatio; }
 
 	private:		
 		void CalcProjectionMatrix();

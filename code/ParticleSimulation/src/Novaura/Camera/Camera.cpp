@@ -24,6 +24,16 @@ namespace Novaura {
 
 		CalcViewProjectionMatrix();
 	}
+	void Camera::SetProjectionMatrix(float left, float right, float bottom, float top)
+	{
+		//m_AspectRatio = (width / height);
+		//m_Width = width;
+		//m_Height = height;
+		//m_ProjectionMatrix = glm::ortho(-m_AspectRatio, m_AspectRatio, -1.0f, 1.0f, -1.0f, 1.0f);
+		//m_ProjectionMatrix = glm::ortho(0.0f, m_AspectRatio, 0.0f, m_AspectRatio, -1.0f, 1.0f);
+		//m_ProjectionMatrix = glm::ortho(0.0f, width, 0.0f, height, -1.0f, 1.0f);
+		m_ProjectionMatrix = glm::ortho(left, right, bottom, top, -1.0f, 1.0f);
+	}
 	void Camera::SetViewMatrix(const glm::vec3& position, float rotation)
 	{
 		m_ViewMatrix = glm::inverse(glm::translate(glm::mat4(1.0f), position) * glm::rotate(glm::mat4(1.0f), glm::radians(rotation), glm::vec3(0.0f,0.0f,1.0f)));

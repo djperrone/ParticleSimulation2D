@@ -43,29 +43,15 @@ namespace Novaura {
 			m_Position.y -= cos(glm::radians(m_Rotation)) * m_CameraSpeed * deltaTime;*/
 		}
 		
-		
-
-		/*if (glfwGetKey(window.Window, GLFW_KEY_Q) == GLFW_PRESS)
-		{
-			m_Rotation += m_RotationSpeed * deltaTime;
-		}
-		if (glfwGetKey(window.Window, GLFW_KEY_E) == GLFW_PRESS)
-		{
-			m_Rotation -= m_RotationSpeed * deltaTime;
-		}
-		if (m_Rotation > 180.0f)
-			m_Rotation -= 360.0f;
-		else if (m_Rotation <= -180.0f)
-			m_Rotation += 360.0f;*/
-
-		//m_Camera.SetRotation(m_Rotation);
-		//m_Camera.SetPosition(m_Position);
 		m_Camera.SetViewMatrix(m_Position);
-		//m_Camera.SetViewMatrix(m_Position, m_Rotation);
-		//m_Camera.SetProjectionMatrix(window.Width, window.Height);
+	
 	}
 	void CameraController::ProcessMouseScroll(double yoffset)
 	{
 		//m_Rotation += yoffset;
+		m_Zoom -= yoffset * 0.25f;
+		m_Zoom = std::max(m_Zoom, 0.25f);
+		//m_Bounds = { -m_Camera.GetAspectRatio() * m_Zoom, m_Camera.GetAspectRatio() * m_Zoom, -m_Zoom, m_Zoom };
+		m_Camera.SetProjectionMatrix(-m_Camera.GetAspectRatio() * m_Zoom, m_Camera.GetAspectRatio() * m_Zoom, -m_Zoom, m_Zoom);
 	}
 }

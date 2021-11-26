@@ -1,7 +1,19 @@
 #ifndef __CS267_COMMON_H__
 #define __CS267_COMMON_H__
+
 #include <cstdio>
+
 namespace common {
+
+
+	inline int mymin(int a, int b) { return a < b ? a : b; }
+	inline int mymax(int a, int b) { return a > b ? a : b; }
+
+//#define density 0.0005
+//#define mass    0.01
+//#define cutoff  0.01
+//#define min_r   (cutoff/100)
+//#define dt      0.0005
 
 	struct ParticleData
 	{
@@ -11,28 +23,8 @@ namespace common {
 		static float min_r; //= (cutoff / 100);
 		static float dt; //= 0.0005f;
 		static int num_particles;// = 5;
+		static double size;
 	};
-	//// max density .03
-	//static float density = 0.03f;
-	//static float mass    =   0.7f;
-	//static float cutoff = 0.095f;
-	//static float min_r =  (cutoff/100);
-	//static float dt    =  0.0005f;
-	//static float num_particles = 5;
-
-	
-
-	/*static float density = 0.03f;
-	static float mass = 0.01f;
-	static float cutoff = 0.00095f;
-	static float min_r = (cutoff / 100);
-	static float dt = 0.0005f;*/
-
-	static float velocity_modifier = 0.25f;
-
-
-	inline int min(int a, int b) { return a < b ? a : b; }
-	inline int max(int a, int b) { return a > b ? a : b; }
 
 	//
 	//  saving parameters
@@ -51,6 +43,7 @@ namespace common {
 		double vy;
 		double ax;
 		double ay;
+
 	} particle_t;
 
 	//
@@ -61,11 +54,11 @@ namespace common {
 	//
 	//  simulation routines
 	//
+
 	void set_size(int n);
 	void init_particles(int n, particle_t* p);
-	void apply_force(particle_t& particle, particle_t& neighbor, double* dmin, double* davg, int* navg);
+	void apply_force(particle_t& particle, particle_t& neighbor);
 	void move(particle_t& p, float deltaTime);
-
 
 	//
 	//  I/O routines
@@ -79,6 +72,6 @@ namespace common {
 	int find_option(int argc, char** argv, const char* option);
 	int read_int(int argc, char** argv, const char* option, int default_value);
 	char* read_string(int argc, char** argv, const char* option, char* default_value);
-}
 
+}
 #endif

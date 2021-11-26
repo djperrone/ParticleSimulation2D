@@ -1,4 +1,5 @@
 #pragma once
+
 /*
  * gettimeofday.c
  *    Win32 gettimeofday() replacement
@@ -27,9 +28,9 @@
  * SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
 
-//#include "c.h"
+ //#include "c.h"
 
-//#include <sys/time.h>
+ //#include <sys/time.h>
 #include <Windows.h>
 #include <cstdio>
 #include <ctime>

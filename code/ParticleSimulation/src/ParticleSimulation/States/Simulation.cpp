@@ -94,7 +94,7 @@ namespace ParticleSimulation {
 			{
 				particles[i].ax = particles[i].ay = 0;
 				for (int j = 0; j < common::ParticleData::num_particles; j++)
-					apply_force(particles[i], particles[j], &dmin, &davg, &navg);
+					apply_force(particles[i], particles[j]);
 			}
 
 			//
@@ -136,10 +136,10 @@ namespace ParticleSimulation {
 		float width = Novaura::InputHandler::GetCurrentWindow()->Width;
 		float height = Novaura::InputHandler::GetCurrentWindow()->Height;
 		float aspectRatio = Novaura::InputHandler::GetCurrentWindow()->AspectRatio;		
-		float scale = common::ParticleData::density * 60.0f;
+		//float scale = common::ParticleData::density * 60.0f;
 		//Novaura::BatchRenderer::StencilDraw(glm::vec3(0.5f, 0.5f, 0.0f), glm::vec3(0.25f, 0.25f, 0.0f), glm::vec4(0.5f, 0.1f, 0.8f, 1.0f), glm::vec4(0.1f, 0.8f, 0.1f, 1.0f));
 		//Novaura::BatchRenderer::StencilDraw(glm::vec3(0.5f, 0.0f, 0.0f), glm::vec3(2.0f, 1.5f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f));
-		Novaura::BatchRenderer::DrawRectangle(glm::vec3(-0.65f, 0.1f, 0.0f), glm::vec3(scale, scale, 1.0), glm::vec4(0.2f, 0.2f, 0.8f, 1.0f));
+		Novaura::BatchRenderer::DrawRectangle(glm::vec3(-0.65f, 0.1f, 0.0f), glm::vec3(common::ParticleData::size, common::ParticleData::size, 1.0), glm::vec4(0.2f, 0.2f, 0.8f, 1.0f));
 		for (int i =0; i < common::ParticleData::num_particles; i++)
 		{
 			Novaura::BatchRenderer::DrawCircle(glm::vec3(particles[i].x -1.5f, particles[i].y-0.75, 0), glm::vec3(particleScale, particleScale, 0), glm::vec4(0.8f, 0.2f, 0.2f, 1.0f), glm::vec2(1.0f, 1.0f));

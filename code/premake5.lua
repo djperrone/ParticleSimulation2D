@@ -20,12 +20,12 @@ IncludeDir["stb_image"] = "ParticleSimulation/vendor/stb_image"
 IncludeDir["glm"] = "ParticleSimulation/vendor/glm"
 IncludeDir["FreeType"] = "ParticleSimulation/vendor/FreeType/include"
 
-
+group "Dependencies"
 include "ParticleSimulation/vendor/GLFW"
 include "ParticleSimulation/vendor/Glad"
 include "ParticleSimulation/vendor/FreeType"
 include "ParticleSimulation/vendor/imgui"
-
+group ""
 
 project "ParticleSimulation"
 	location "ParticleSimulation"
@@ -33,6 +33,7 @@ project "ParticleSimulation"
 	language "C++"
 	cppdialect "C++17"
 	staticruntime "on"
+	buildcustomizations "BuildCustomizations/CUDA 11.5"
 	
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")

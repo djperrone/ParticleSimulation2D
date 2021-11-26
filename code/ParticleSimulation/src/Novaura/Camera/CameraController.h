@@ -20,7 +20,7 @@ namespace Novaura {
 		Camera m_Camera;
 		glm::vec3 m_Position{ glm::vec3(0.0f,0.0f,0.0f) };
 		float m_Rotation = 45.0f;
-		float m_Zoom = 0.0f;
+		float m_Zoom = 1.0f;
 		float m_CameraSpeed = 0.5;
 		float m_RotationSpeed = 50.0f;
 	};
