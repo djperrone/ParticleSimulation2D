@@ -6,7 +6,7 @@
 
 #include "Novaura/Core/Application.h"
 
-
+#include "CudaSrc/Physics.cuh"
 
 
 
@@ -44,13 +44,43 @@ namespace ParticleSimulation {
 		
 		
 
-
 		
+		
+		//particles = (common::particle_t*)malloc(common::ParticleData::num_particles * sizeof(common::particle_t));
+		//common::set_size(common::ParticleData::num_particles);
+		//common::init_particles(common::ParticleData::num_particles, particles);
+
 		particles = (common::particle_t*)malloc(common::ParticleData::num_particles * sizeof(common::particle_t));
 		common::set_size(common::ParticleData::num_particles);
-		init_particles(common::ParticleData::num_particles, particles);
-		particles[0].x = 1.5;
-		particles[1].x = -1.5;
+
+		common::init_particles(common::ParticleData::num_particles, particles);
+
+		int blocks_per_side = (int)round(sqrt(common::ParticleData::num_particles));
+		double block_size = common::ParticleData::size / blocks_per_side;
+		if (block_size < .01) {
+			blocks_per_side = (int)common::ParticleData::size / common::ParticleData::cutoff;
+			block_size = common::ParticleData::size / blocks_per_side;
+		}
+		
+		m_Grid = (common::Block*)malloc(blocks_per_side * blocks_per_side * sizeof(common::Block));
+		for (int i = 0; i < blocks_per_side * blocks_per_side; i++) {
+			m_Grid[i].pcount = 0;
+		}
+
+		// fill the grid
+		for (int i = 0; i < common::ParticleData::num_particles; i++) {
+			int block_x = (int)(particles[i].x / block_size);
+			int block_y = (int)(particles[i].y / block_size);
+			common::push_particle(m_Grid[block_x * blocks_per_side + block_y], &particles[i], i);
+		}
+		//cudaMalloc((void**)&m_Grid_gpu, blocks_per_side * blocks_per_side * sizeof(common::Block));
+		//Physics::InitParticles(particles, d_particles);
+
+
+
+
+		//particles[0].x = 1.5;
+		//particles[1].x = -1.5;
 		//particles[3].y = 0.8;
 		//particles[4].y =- 0.8;
 		/*for (int i = 0; i < common::ParticleData::num_particles; i++)
@@ -78,48 +108,14 @@ namespace ParticleSimulation {
 		m_CameraController->Update(*Novaura::InputHandler::GetCurrentWindow(), deltaTime);
 		if (!m_StateInfo.PAUSE)
 		{
-			//m_ObjectManager->Update(deltaTime);
+			int blks = (common::ParticleData::num_particles + NUM_THREADS - 1) / NUM_THREADS;
+			//Physics::compute_forces_gpu << < blks, NUM_THREADS >> > (d_particles, n);
 
-			simulation_time = common::read_timer();
 
-			//for (int step = 0; step < common::NSTEPS; step++)
-			//{
-			navg = 0;
-			davg = 0.0;
-			dmin = 1.0;
-			//
-			//  compute forces
-			//
-			for (int i = 0; i < common::ParticleData::num_particles; i++)
-			{
-				particles[i].ax = particles[i].ay = 0;
-				for (int j = 0; j < common::ParticleData::num_particles; j++)
-					apply_force(particles[i], particles[j]);
-			}
+			
 
-			//
-			//  move particles
-			//
-			for (int i = 0; i < common::ParticleData::num_particles; i++)
-				move(particles[i], deltaTime);
-
-			if (navg) {
-				absavg += davg / navg;
-				nabsavg++;
-			}
-			if (dmin < absmin) absmin = dmin;
-			//}
-			simulation_time = common::read_timer() - simulation_time;
-			/*	for (int i = 0; i < n; i++)
-				{
-					std::cout << particles[i].vx << ' ' << particles[i].vy << '\n';
-				}*/
-
-				/*for (int i = 0; i < n; i++)
-				{
-					while (particles[i].x < 0.1)
-						particles[i].x *= 10;
-				}*/
+			
+			
 		}
 		
 
@@ -140,7 +136,7 @@ namespace ParticleSimulation {
 		//Novaura::BatchRenderer::StencilDraw(glm::vec3(0.5f, 0.5f, 0.0f), glm::vec3(0.25f, 0.25f, 0.0f), glm::vec4(0.5f, 0.1f, 0.8f, 1.0f), glm::vec4(0.1f, 0.8f, 0.1f, 1.0f));
 		//Novaura::BatchRenderer::StencilDraw(glm::vec3(0.5f, 0.0f, 0.0f), glm::vec3(2.0f, 1.5f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f));
 		Novaura::BatchRenderer::DrawRectangle(glm::vec3(-0.65f, 0.1f, 0.0f), glm::vec3(common::ParticleData::size, common::ParticleData::size, 1.0), glm::vec4(0.2f, 0.2f, 0.8f, 1.0f));
-		for (int i =0; i < common::ParticleData::num_particles; i++)
+		for (int i = 0; i < common::ParticleData::num_particles; i++)
 		{
 			Novaura::BatchRenderer::DrawCircle(glm::vec3(particles[i].x -1.5f, particles[i].y-0.75, 0), glm::vec3(particleScale, particleScale, 0), glm::vec4(0.8f, 0.2f, 0.2f, 1.0f), glm::vec2(1.0f, 1.0f));
 		}

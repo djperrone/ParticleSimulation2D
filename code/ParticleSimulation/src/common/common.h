@@ -2,6 +2,8 @@
 #define __CS267_COMMON_H__
 
 #include <cstdio>
+#include "particle_t.h"
+#include "ParticleData.h"
 
 #define density1 0.0005
 #define mass1    0.01
@@ -21,16 +23,16 @@ namespace common {
 //#define min_r   (cutoff/100)
 //#define dt      0.0005
 	//float dt = 0.005;
-	struct ParticleData
-	{
-		static float density;// = 0.03f;
-		static float mass;// = 0.7f;
-		static float cutoff; //= 0.095f;
-		static float min_r; //= (cutoff / 100);
-		static float dt; //= 0.0005f;
-		static int num_particles;// = 5;
-		static double size;
-	};
+	//struct ParticleData
+	//{
+	//	static float density;// = 0.03f;
+	//	static float mass;// = 0.7f;
+	//	static float cutoff; //= 0.095f;
+	//	static float min_r; //= (cutoff / 100);
+	//	static float dt; //= 0.0005f;
+	//	static int num_particles;// = 5;
+	//	static double size;
+	//};
 
 	//__global__ float density;// = 0.03f;
 	//__global__ float mass;// = 0.7f;
@@ -54,7 +56,7 @@ namespace common {
 	//
 	// particle data structure
 	//
-	typedef struct
+	/*typedef struct
 	{
 		double x;
 		double y;
@@ -63,7 +65,7 @@ namespace common {
 		double ax;
 		double ay;
 
-	} particle_t;
+	} particle_t;*/
 
 	//
 	//  timing routines

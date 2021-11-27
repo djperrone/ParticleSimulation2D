@@ -7,7 +7,7 @@
 
 #include "common/common.h"
 #include "../gui.h"
-
+#include "common/Block.h"
 
 namespace ParticleSimulation {
 
@@ -36,10 +36,16 @@ namespace ParticleSimulation {
 		double m_PreviousTime = 0.0;
 		float particleScale = 0.05f;
 
+		int m_BlocksPerSide;
+
 		StateInfo m_StateInfo;
 		
 
 		common::particle_t* particles;
+		common::particle_t* d_particles;
+		common::Block* m_Grid;
+		common::Block* m_Grid_gpu;
+
 		//int n;
 		double simulation_time;
 		int navg, nabsavg = 0;

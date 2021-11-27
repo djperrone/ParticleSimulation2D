@@ -1,9 +1,11 @@
 #ifndef COMMON_GPU
 #define COMMON_GPU
+
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 #include <cstdio>
+#include "ParticleData.h"
 
 namespace common_gpu {
 
@@ -18,16 +20,27 @@ namespace common_gpu {
 	//#define dt      0.0005
 	//float test1 = 0.5f;
 	//__device__ const float test = 0.0f;
-	//struct ParticleData
-	//{
-	//	static float density;// = 0.03f;
-	//	static float mass;// = 0.7f;
-	//	static float cutoff; //= 0.095f;
-	//	static float min_r; //= (cutoff / 100);
-	//	static float dt; //= 0.0005f;
-	//	static int num_particles;// = 5;
-	//	static double size;
-	//};
+	struct ParticleDataGPU
+	{
+		float density;// = 0.03f;
+		float mass;// = 0.7f;
+		float cutoff; //= 0.095f;
+		float min_r; //= (cutoff / 100);
+		float dt; //= 0.0005f;
+		int num_particles;// = 5;
+		double size;
+
+		void Init()
+		{
+			density = common::ParticleData::density;
+			mass = common::ParticleData::mass;
+			cutoff = common::ParticleData::cutoff;
+			min_r = common::ParticleData::min_r;
+			dt = common::ParticleData::dt;
+			num_particles = common::ParticleData::num_particles;
+			size = common::ParticleData::size;
+		}
+	};
 	//__constant__ float density = 0.04f;
 	//__constant__ float size = 0.0f;
 	//zstatic ParticleData* pData;
