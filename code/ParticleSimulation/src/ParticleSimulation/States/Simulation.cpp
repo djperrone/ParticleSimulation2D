@@ -12,7 +12,6 @@
 
 namespace ParticleSimulation {
 	
-	
 
 	Simulation::Simulation()
 	{

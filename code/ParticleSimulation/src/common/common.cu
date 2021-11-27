@@ -13,12 +13,12 @@
 
 namespace common {
 
-    float ParticleData::density = 0.0005f;
+    float ParticleData::density = 0.005f;
     float ParticleData::mass = 0.01f;
     float ParticleData::cutoff = 0.01f;
     float ParticleData::min_r = (cutoff / 100);
     float ParticleData::dt = 0.0005f;
-    int ParticleData::num_particles = 100;
+    int ParticleData::num_particles = 50;
     double ParticleData::size = 0.0;
 
 
