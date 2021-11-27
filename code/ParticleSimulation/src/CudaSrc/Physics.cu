@@ -68,39 +68,44 @@ namespace Physics {
         int j = tid % blocks_per_side;
 
         common::Block& curr = grid[i * blocks_per_side + j];
+       // printf("blocks_per_side * blocks_per_side: %i\n", blocks_per_side * blocks_per_side);
+        printf("i: %i, j: %i\n", i, j);
+        printf("tid: %i\n", tid);
+
         //set acc to 0
         for (int k = 0; k < curr.pcount; k++) {
-            curr.particles[k]->ax = curr.particles[k]->ay = 0;
+            printf("x: %f, k: %i\n" ,curr.particles[k]->x, k);
+            //curr.particles[k]->ax = curr.particles[k]->ay = 0;
         }
 
-        // check each of 8 neighbors exists, calling apply_across_blocks_gpu if so
-        if (j != blocks_per_side - 1) { //right
-            apply_across_blocks_gpu(curr, grid[i * blocks_per_side + j + 1]);
-        }
-        if (j != blocks_per_side - 1 && i != blocks_per_side - 1) { //down+right
-            apply_across_blocks_gpu(curr, grid[(i + 1) * blocks_per_side + j + 1]);
-        }
-        if (j != blocks_per_side - 1 && i != 0) { //up+right
-            apply_across_blocks_gpu(curr, grid[(i - 1) * blocks_per_side + j + 1]);
-        }
-        if (i != 0) { //up
-            apply_across_blocks_gpu(curr, grid[(i - 1) * blocks_per_side + j]);
-        }
-        if (i != blocks_per_side - 1) { //down
-            apply_across_blocks_gpu(curr, grid[(i + 1) * blocks_per_side + j]);
-        }
-        if (j != 0) { //left
-            apply_across_blocks_gpu(curr, grid[i * blocks_per_side + j - 1]);
-        }
-        if (j != 0 && i != 0) { //up+left
-            apply_across_blocks_gpu(curr, grid[(i - 1) * blocks_per_side + j - 1]);
-        }
-        if (j != 0 && i != blocks_per_side - 1) { //down+left
-            apply_across_blocks_gpu(curr, grid[(i + 1) * blocks_per_side + j - 1]);
-        }
+        //// check each of 8 neighbors exists, calling apply_across_blocks_gpu if so
+        //if (j != blocks_per_side - 1) { //right
+        //    apply_across_blocks_gpu(curr, grid[i * blocks_per_side + j + 1]);
+        //}
+        //if (j != blocks_per_side - 1 && i != blocks_per_side - 1) { //down+right
+        //    apply_across_blocks_gpu(curr, grid[(i + 1) * blocks_per_side + j + 1]);
+        //}
+        //if (j != blocks_per_side - 1 && i != 0) { //up+right
+        //    apply_across_blocks_gpu(curr, grid[(i - 1) * blocks_per_side + j + 1]);
+        //}
+        //if (i != 0) { //up
+        //    apply_across_blocks_gpu(curr, grid[(i - 1) * blocks_per_side + j]);
+        //}
+        //if (i != blocks_per_side - 1) { //down
+        //    apply_across_blocks_gpu(curr, grid[(i + 1) * blocks_per_side + j]);
+        //}
+        //if (j != 0) { //left
+        //    apply_across_blocks_gpu(curr, grid[i * blocks_per_side + j - 1]);
+        //}
+        //if (j != 0 && i != 0) { //up+left
+        //    apply_across_blocks_gpu(curr, grid[(i - 1) * blocks_per_side + j - 1]);
+        //}
+        //if (j != 0 && i != blocks_per_side - 1) { //down+left
+        //    apply_across_blocks_gpu(curr, grid[(i + 1) * blocks_per_side + j - 1]);
+        //}
 
-        // apply forces within the block
-        apply_within_block_gpu(curr);
+        //// apply forces within the block
+        //apply_within_block_gpu(curr);
     }
 
     __global__ void move_gpu(common::Block* grid, int blocks_per_side, double size)
@@ -170,7 +175,23 @@ namespace Physics {
     void compute_forces(int blks, int numThreads, common::Block* grid, int blocks_per_side)
     {
        // printf(__FUNCTION__);
+        cudaError_t cudaerr = cudaDeviceSynchronize();
+        if (cudaerr != cudaSuccess)
+        {
+            printf("1 kernel launch failed with error \"%s\".\n",
+                cudaGetErrorString(cudaerr));
+            __debugbreak;
+        }
+
         compute_forces_gpu CUDA_KERNEL(blks, NUM_THREADS) (grid, blocks_per_side);
+        cudaerr = cudaDeviceSynchronize();
+        if (cudaerr != cudaSuccess)
+        {
+            printf("2 kernel launch failed with error \"%s\".\n",
+                cudaGetErrorString(cudaerr));
+            __debugbreak;
+        }
+
     }
 
     void move(int blks, int numThreads, common::Block* grid, int blocks_per_side, double size)

@@ -66,13 +66,37 @@ namespace ParticleSimulation {
 			int block_y = (int)(particles[i].y / m_BlockSize);
 			common::push_particle(m_Grid[block_x * m_BlocksPerSide + block_y], &particles[i], i);
 		}
+		//cudaError_t cudaerr = cudaDeviceSynchronize();
 
+		/*if (cudaerr != cudaSuccess)
+		{
+			printf("1 kernel launch failed with error \"%s\".\n",
+				cudaGetErrorString(cudaerr));
+			__debugbreak;
+		}*/
 		
 		
+		
 
-		cudaMalloc((void**)&m_Grid_gpu, m_BlocksPerSide * m_BlocksPerSide * sizeof(common::Block));
-		cudaMemcpy(m_Grid_gpu, m_Grid, m_BlocksPerSide * m_BlocksPerSide * sizeof(common::Block), cudaMemcpyHostToDevice);
 
+		if (cudaMalloc((void**)&m_Grid_gpu, m_BlocksPerSide * m_BlocksPerSide * sizeof(common::Block)) != cudaSuccess)
+		{
+			printf("error cudamalloc\n");
+		}
+		
+		if (cudaMemcpy(m_Grid_gpu, m_Grid, m_BlocksPerSide * m_BlocksPerSide * sizeof(common::Block), cudaMemcpyHostToDevice) != cudaSuccess)
+		{
+			printf("error cudacopy\n");
+
+		}
+		//cudaerr = cudaDeviceSynchronize();
+
+		/*if (cudaerr != cudaSuccess)
+		{
+			printf("2 kernel launch failed with error \"%s\".\n",
+				cudaGetErrorString(cudaerr));
+			__debugbreak;
+		}*/
 
 		m_StateInfo.PAUSE = true;
 		m_StateInfo.PLAY = false;
@@ -95,36 +119,49 @@ namespace ParticleSimulation {
 		m_CameraController->Update(*Novaura::InputHandler::GetCurrentWindow(), deltaTime);
 		if (!m_StateInfo.PAUSE)
 		{
-			cudaDeviceSynchronize();
+			//cudaError_t cudaerr = cudaDeviceSynchronize();
 
-			int blks = (common::ParticleData::num_particles + NUM_THREADS - 1) / NUM_THREADS;
+		/*	if (cudaerr != cudaSuccess)
+			{
+				printf("3 kernel launch failed with error \"%s\".\n",
+					cudaGetErrorString(cudaerr));
+				__debugbreak;
+			}*/
+			//cudaDeviceSynchronize();
+
+			int blks = (m_BlocksPerSide * m_BlocksPerSide + NUM_THREADS - 1) / NUM_THREADS;
 			//Physics::compute_forces_gpu << < blks, NUM_THREADS >> > (d_particles, n);
 			Physics::compute_forces(blks, NUM_THREADS, m_Grid_gpu, m_BlocksPerSide);
-			cudaError_t cudaerr = cudaDeviceSynchronize();
-			if (cudaerr != cudaSuccess)
-				printf("kernel launch failed with error \"%s\".\n",
+			//cudaError_t cudaerr = cudaDeviceSynchronize();
+			//cudaerr = cudaDeviceSynchronize();
+			/*if (cudaerr != cudaSuccess)
+			{
+				printf("4 kernel launch failed with error \"%s\".\n",
 					cudaGetErrorString(cudaerr));
+				__debugbreak;
+			}*/
+				
 			//Physics::move(blks, NUM_THREADS, m_Grid_gpu, m_BlocksPerSide, common::ParticleData::size);
 			//Physics::check_move(blks, NUM_THREADS, m_Grid_gpu, m_BlocksPerSide, m_BlockSize);
 
-			cudaDeviceSynchronize();
+			//cudaDeviceSynchronize();
 
-			cudaMemcpy(m_Grid, m_Grid_gpu, m_BlocksPerSide * m_BlocksPerSide * sizeof(common::Block), cudaMemcpyDeviceToHost);
+			//cudaMemcpy(m_Grid, m_Grid_gpu, m_BlocksPerSide * m_BlocksPerSide * sizeof(common::Block), cudaMemcpyDeviceToHost);
 
-			for (int i = 0; i < m_BlocksPerSide; i++) {
-				for (int j = 0; j < m_BlocksPerSide; j++) {
-					common::Block& curr = m_Grid[i * m_BlocksPerSide + j];
-					for (int k = 0; k < curr.pcount; k++) {
-						//spdlog::info(__FUNCTION__);
+			//for (int i = 0; i < m_BlocksPerSide; i++) {
+			//	for (int j = 0; j < m_BlocksPerSide; j++) {
+			//		common::Block& curr = m_Grid[i * m_BlocksPerSide + j];
+			//		for (int k = 0; k < curr.pcount; k++) {
+			//			//spdlog::info(__FUNCTION__);
 
-						common::particle_t p = particles[curr.ids[k]];
-						particles[curr.ids[k]] = *curr.particles[k];
+			//			common::particle_t p = particles[curr.ids[k]];
+			//			particles[curr.ids[k]] = *curr.particles[k];
 
-						if (p.x != particles[curr.ids[k]].x || p.y != particles[curr.ids[k]].y)
-							spdlog::info("changed!");
-					}
-				}
-			}	
+			//			if (p.x != particles[curr.ids[k]].x || p.y != particles[curr.ids[k]].y)
+			//				spdlog::info("changed!");
+			//		}
+			//	}
+			//}	
 			//cudaDeviceSynchronize();
 			
 
