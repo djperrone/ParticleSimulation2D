@@ -16,6 +16,7 @@ namespace pvec {
 
     // initialize 3D grid of particles
     ParticleVec** InitGrid3d(int length);
+    void FreeGrid(ParticleVec** grid, int length);
 
     // print grid for testing purposes
     void PrintVec(ParticleVec** grid, int blocks_per_side);

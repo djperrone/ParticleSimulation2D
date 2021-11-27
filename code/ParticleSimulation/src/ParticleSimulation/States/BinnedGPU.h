@@ -13,11 +13,11 @@
 namespace ParticleSimulation {
 
 
-	class Simulation : public Novaura::State
+	class BinnedGPU : public Novaura::State
 	{
 	public:
-		Simulation();		
-		Simulation(std::shared_ptr<Novaura::Window> window, std::shared_ptr<Novaura::CameraController> cameraController, std::shared_ptr<Novaura::StateMachine> stateMachine);
+		BinnedGPU();		
+		BinnedGPU(std::shared_ptr<Novaura::Window> window, std::shared_ptr<Novaura::CameraController> cameraController, std::shared_ptr<Novaura::StateMachine> stateMachine);
 		
 		virtual void OnEnter() override;
 
@@ -38,6 +38,7 @@ namespace ParticleSimulation {
 		float particleScale = 0.05f;
 
 		int m_BlocksPerSide;
+		double m_BlockSize;
 
 		StateInfo m_StateInfo;
 		
@@ -53,12 +54,6 @@ namespace ParticleSimulation {
 		double davg, dmin, absmin = 1.0, absavg = 0.0;
 
 		std::unique_ptr<Pgui::Gui> m_Gui;
-
-		// old pvec
-		pvec::ParticleVec** grid;
-
-
-
 
 	};
 }

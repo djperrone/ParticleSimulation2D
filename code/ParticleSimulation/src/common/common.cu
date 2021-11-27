@@ -51,6 +51,12 @@ namespace common {
         ParticleData::size = sqrt(ParticleData::density * n);
     }
 
+    void set_size_for_gpu(int n)
+    {
+        ParticleData::size = sqrt(density1 * n);
+
+    }
+
     //
     //  Initialize the particle positions and velocities
     //
@@ -58,6 +64,40 @@ namespace common {
     {
 
 
+        int sx = (int)ceil(sqrt((double)n));
+        int sy = (n + sx - 1) / sx;
+
+        int* shuffle = (int*)malloc(n * sizeof(int));
+        for (int i = 0; i < n; i++)
+            shuffle[i] = i;
+
+        for (int i = 0; i < n; i++)
+        {
+            //
+            //  make sure particles are not spatially sorted
+            //
+            int j = static_cast<int>(Novaura::Random::Uint32(0, 100000)) % (n - i);
+
+            int k = shuffle[j];
+            shuffle[j] = shuffle[n - i - 1];
+
+            //
+            //  distribute particles evenly to ensure proper spacing
+            //
+            p[i].x = ParticleData::size * (1. + (k % sx)) / (1 + sx);
+            p[i].y = ParticleData::size * (1. + (k / sx)) / (1 + sy);
+
+            //
+            //  assign random velocities within a bound
+            //
+            p[i].vx = Novaura::Random::Float(0.0f, 1.0f) * 2 - 1;
+            p[i].vy = Novaura::Random::Float(0.0f, 1.0f) * 2 - 1;
+        }
+        free(shuffle);
+    }
+
+    void init_particles_for_gpu(int n, particle_t* p)
+    {
         int sx = (int)ceil(sqrt((double)n));
         int sy = (n + sx - 1) / sx;
 

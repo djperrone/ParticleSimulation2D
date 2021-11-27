@@ -15,11 +15,16 @@ struct Block;
 namespace Physics {
 
 	__device__ void apply_force_gpu(common::particle_t& particle, common::particle_t& neighbor);
-	__device__ void apply_within_block_gpu(Block& block);
-	__device__ void apply_across_blocks_gpu(Block& block1, Block& block2);
-	__global__ void compute_forces_gpu(Block* grid, int blocks_per_side);
-	__global__ void move_gpu(Block* grid, int blocks_per_side, double size);
-	__global__ void check_move_gpu(Block* grid, int blocks_per_side, double block_size);
+	__device__ void apply_within_block_gpu(common::Block& block);
+	__device__ void apply_across_blocks_gpu(common::Block& block1, common::Block& block2);
+	__global__ void compute_forces_gpu(common::Block* grid, int blocks_per_side);
+	__global__ void move_gpu(common::Block* grid, int blocks_per_side, double size);
+	__global__ void check_move_gpu(common::Block* grid, int blocks_per_side, double block_size);
+
+	void compute_forces(int blks, int numThreads, common::Block* grid, int blocks_per_side);
+	void move(int blks, int numThreads, common::Block* grid, int blocks_per_side, double size);
+	void check_move(int blks, int numThreads, common::Block* grid, int blocks_per_side, double block_size);
+
 
 	void apply_within_block(pvec::ParticleVec particles);
 	void apply_across_blocks(pvec::ParticleVec particles1, pvec::ParticleVec particles2);

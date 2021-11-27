@@ -82,6 +82,16 @@ namespace pvec {
         return particleVec;
     }
 
+    void FreeGrid(ParticleVec** grid, int length)
+    {
+        for (int i = 0; i < length; i++)
+        {
+            free(grid[i]);           
+        }
+
+        free(grid);
+    }
+
 
     void PrintVec(ParticleVec** grid, int blocks_per_side)
     {

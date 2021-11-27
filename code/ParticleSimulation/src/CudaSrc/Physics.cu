@@ -12,6 +12,13 @@
 #include "BlockFunctions.cuh"
 #include "common/PVec.h"
 
+// https://stackoverflow.com/questions/6061565/setting-up-visual-studio-intellisense-for-cuda-kernel-calls
+#ifdef __INTELLISENSE__
+#define CUDA_KERNEL(...)
+#else
+#define CUDA_KERNEL(...) <<< __VA_ARGS__ >>>
+#endif
+
 namespace Physics {
 
     __device__ void apply_force_gpu(common::particle_t& particle, common::particle_t& neighbor)
@@ -51,6 +58,8 @@ namespace Physics {
 
     __global__ void compute_forces_gpu(common::Block* grid, int blocks_per_side)
     {
+       // printf(__FUNCTION__);
+
         // Get thread (particle) ID
         int tid = threadIdx.x + blockIdx.x * blockDim.x;
         if (tid >= blocks_per_side * blocks_per_side) return;
@@ -96,6 +105,7 @@ namespace Physics {
 
     __global__ void move_gpu(common::Block* grid, int blocks_per_side, double size)
     {
+        //printf(__FUNCTION__);
 
         // Get thread (particle) ID
         int tid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -134,6 +144,8 @@ namespace Physics {
 
     __global__ void check_move_gpu(common::Block* grid, int blocks_per_side, double block_size)
     {
+        printf(__FUNCTION__);
+
         int tid = threadIdx.x + blockIdx.x * blockDim.x;
         if (tid >= blocks_per_side * blocks_per_side) return;
 
@@ -153,6 +165,27 @@ namespace Physics {
             }
         }
 
+    }
+
+    void compute_forces(int blks, int numThreads, common::Block* grid, int blocks_per_side)
+    {
+       // printf(__FUNCTION__);
+        compute_forces_gpu CUDA_KERNEL(blks, NUM_THREADS) (grid, blocks_per_side);
+    }
+
+    void move(int blks, int numThreads, common::Block* grid, int blocks_per_side, double size)
+    {
+        //printf(__FUNCTION__);
+
+        move_gpu CUDA_KERNEL(blks, numThreads)(grid, blocks_per_side, size);
+    }
+
+    void check_move(int blks, int numThreads, common::Block* grid, int blocks_per_side, double block_size)
+    {
+        //printf(__FUNCTION__);
+        //printf(__FUNCTION__);
+
+        check_move_gpu CUDA_KERNEL(blks, numThreads) (grid, blocks_per_side, block_size);
     }
 
     void InitParticles(common::particle_t* particles, common::particle_t* d_particles)

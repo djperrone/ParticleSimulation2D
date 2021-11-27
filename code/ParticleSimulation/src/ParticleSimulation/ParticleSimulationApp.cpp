@@ -1,7 +1,7 @@
 #include "sapch.h"
 #include "ParticleSimulationApp.h"
 
-#include "States/Simulation.h"
+#include "States/BinnedGPU.h"
 #include "States/BinnedCPU.h"
 #include "States/SerialCPU.h"
 
@@ -15,7 +15,7 @@ namespace ParticleSimulation {
 		:Application(title, width, height)
 	{		
 		//m_StateMachine->PushState(std::make_unique<SerialCPU>(GetWindow(), m_CameraController, m_StateMachine));
-		m_StateMachine->PushState(std::make_unique<BinnedCPU>(GetWindow(), m_CameraController, m_StateMachine));
-		//m_StateMachine->PushState(std::make_unique<Simulation>(GetWindow(), m_CameraController, m_StateMachine));
+		//m_StateMachine->PushState(std::make_unique<BinnedCPU>(GetWindow(), m_CameraController, m_StateMachine));
+		m_StateMachine->PushState(std::make_unique<BinnedGPU>(GetWindow(), m_CameraController, m_StateMachine));
 	}
 }

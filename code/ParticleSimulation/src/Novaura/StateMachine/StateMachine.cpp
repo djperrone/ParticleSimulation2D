@@ -26,6 +26,11 @@ namespace Novaura {
     }
     void StateMachine::ShutDown()
     {
+        while (!m_States.empty())
+        {
+            m_States.pop();
+        }
+        glfwTerminate();
         exit(0);
     }
     void StateMachine::ClearPastStates()

@@ -5,7 +5,7 @@
 #include "particle_t.h"
 #include "ParticleData.h"
 
-#define density1 0.0005
+#define density1 0.005
 #define mass1    0.01
 #define cutoff1  0.01
 #define min_r1   (cutoff1/100)
@@ -77,7 +77,9 @@ namespace common {
 	//
 
 	void set_size(int n);
+	void set_size_for_gpu(int n);
 	void init_particles(int n, particle_t* p);
+	void init_particles_for_gpu(int n, particle_t* p);
 	void apply_force(particle_t& particle, particle_t& neighbor);
 	void move(particle_t& p, float deltaTime);
 

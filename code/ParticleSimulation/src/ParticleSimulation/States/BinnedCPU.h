@@ -18,7 +18,7 @@ namespace ParticleSimulation {
 	public:
 		BinnedCPU();		
 		BinnedCPU(std::shared_ptr<Novaura::Window> window, std::shared_ptr<Novaura::CameraController> cameraController, std::shared_ptr<Novaura::StateMachine> stateMachine);
-		
+		~BinnedCPU();
 		virtual void OnEnter() override;
 
 		virtual void HandleInput() override;
