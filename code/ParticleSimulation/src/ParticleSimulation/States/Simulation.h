@@ -8,6 +8,7 @@
 #include "common/common.h"
 #include "../gui.h"
 #include "common/Block.h"
+#include "common/PVec.h"
 
 namespace ParticleSimulation {
 
@@ -52,6 +53,10 @@ namespace ParticleSimulation {
 		double davg, dmin, absmin = 1.0, absavg = 0.0;
 
 		std::unique_ptr<Pgui::Gui> m_Gui;
+
+		// old pvec
+		pvec::ParticleVec** grid;
+
 
 
 

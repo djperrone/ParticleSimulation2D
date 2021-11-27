@@ -55,24 +55,35 @@ namespace ParticleSimulation {
 
 		common::init_particles(common::ParticleData::num_particles, particles);
 
-		int blocks_per_side = (int)round(sqrt(common::ParticleData::num_particles));
-		double block_size = common::ParticleData::size / blocks_per_side;
+		m_BlocksPerSide = (int)round(sqrt(common::ParticleData::num_particles));
+		double block_size = common::ParticleData::size / m_BlocksPerSide;
 		if (block_size < .01) {
-			blocks_per_side = (int)common::ParticleData::size / common::ParticleData::cutoff;
-			block_size = common::ParticleData::size / blocks_per_side;
+			m_BlocksPerSide = (int)common::ParticleData::size / common::ParticleData::cutoff;
+			block_size = common::ParticleData::size / m_BlocksPerSide;
 		}
 		
-		m_Grid = (common::Block*)malloc(blocks_per_side * blocks_per_side * sizeof(common::Block));
-		for (int i = 0; i < blocks_per_side * blocks_per_side; i++) {
-			m_Grid[i].pcount = 0;
-		}
+		//m_Grid = (common::Block*)malloc(m_BlocksPerSide * m_BlocksPerSide * sizeof(common::Block));
+		//for (int i = 0; i < m_BlocksPerSide * m_BlocksPerSide; i++) {
+		//	m_Grid[i].pcount = 0;
+		//}
 
+		//// fill the grid
+		//for (int i = 0; i < common::ParticleData::num_particles; i++) {
+		//	int block_x = (int)(particles[i].x / block_size);
+		//	int block_y = (int)(particles[i].y / block_size);
+		//	common::push_particle(m_Grid[block_x * m_BlocksPerSide + block_y], &particles[i], i);
+		//}
+
+		grid = pvec::InitGrid3d(m_BlocksPerSide);
 		// fill the grid
 		for (int i = 0; i < common::ParticleData::num_particles; i++) {
-			int block_x = (int)(particles[i].x / block_size);
-			int block_y = (int)(particles[i].y / block_size);
-			common::push_particle(m_Grid[block_x * blocks_per_side + block_y], &particles[i], i);
+			int block_x = (int)particles[i].x / block_size;
+			int block_y = (int)particles[i].y / block_size;
+
+			//grid[block_x][block_y].push_back(&particles[i]);
+			pvec::PushParticle(grid[block_x][block_y], (&particles[i]));
 		}
+
 		//cudaMalloc((void**)&m_Grid_gpu, blocks_per_side * blocks_per_side * sizeof(common::Block));
 		//Physics::InitParticles(particles, d_particles);
 
@@ -111,7 +122,51 @@ namespace ParticleSimulation {
 			int blks = (common::ParticleData::num_particles + NUM_THREADS - 1) / NUM_THREADS;
 			//Physics::compute_forces_gpu << < blks, NUM_THREADS >> > (d_particles, n);
 
+			for (int i = 0; i < m_BlocksPerSide; i++) {
+				for (int j = 0; j < m_BlocksPerSide; j++) {
 
+					// set acceleration of particles in block to 0
+					for (int k = 0; k < grid[i][j].pcount; k++) {
+						grid[i][j].data[k]->ax = grid[i][j].data[k]->ay = 0;
+					}
+
+					// check each of 8 neighbors exists, calling apply_across_blocks if so
+					if (j != m_BlocksPerSide - 1) { //right
+						Physics::apply_across_blocks(grid[i][j], grid[i][j + 1]);
+					}
+					if (j != m_BlocksPerSide - 1 && i != m_BlocksPerSide - 1) { //down+right
+						Physics::apply_across_blocks(grid[i][j], grid[i + 1][j + 1]);
+					}
+					if (j != m_BlocksPerSide - 1 && i != 0) { //up+right
+						Physics::apply_across_blocks(grid[i][j], grid[i - 1][j + 1]);
+					}
+					if (i != 0) { //up
+						Physics::apply_across_blocks(grid[i][j], grid[i - 1][j]);
+					}
+					if (i != m_BlocksPerSide - 1) { //down
+						Physics::apply_across_blocks(grid[i][j], grid[i + 1][j]);
+					}
+					if (j != 0) { //left
+						Physics::apply_across_blocks(grid[i][j], grid[i][j - 1]);
+					}
+					if (j != 0 && i != 0) { //up+left
+						Physics::apply_across_blocks(grid[i][j], grid[i - 1][j - 1]);
+					}
+					if (j != 0 && i != m_BlocksPerSide - 1) { //down+left
+						Physics::apply_across_blocks(grid[i][j], grid[i + 1][j - 1]);
+					}
+
+					// apply forces within the block
+					Physics::apply_within_block(grid[i][j]);
+				}
+			}
+
+			for (int i = 0; i < common::ParticleData::num_particles; i++) {
+				double old_x = particles[i].x;
+				double old_y = particles[i].y;
+				common::move(particles[i], 0.005f);
+				Physics::check_move(grid, &particles[i], old_x, old_y, m_BlocksPerSide);
+			}
 			
 
 			

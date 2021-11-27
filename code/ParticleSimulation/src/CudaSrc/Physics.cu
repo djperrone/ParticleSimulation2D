@@ -177,41 +177,60 @@ namespace Physics {
 
 
 
-//    void apply_within_block (pvec::ParticleVec particles){
-//    int num_particles = particles.pcount;
-//    for(int i = 0; i < num_particles; i++){
-//        for(int j = 0; j < num_particles; j++){
-//            apply_force(*particles.data[i], *particles.data[j]);
-//        }
-//    }
-//}
-//
-//void apply_across_blocks (pvec::ParticleVec particles1, pvec::ParticleVec particles2){
-//    int num_particles1 = particles1.pcount;
-//    int num_particles2 = particles2.pcount;
-//    for(int i = 0; i < num_particles1; i++){
-//        for(int j = 0; j < num_particles2; j++){
-//            apply_force(*particles1.data[i], *particles2.data[j]);
-//        }
-//    }
-//}
-//
-//void check_move(common::particle_t* particle, double old_x, double old_y, double block_size){
-//    int old_block_x = (int) old_x / block_size;
-//    int old_block_y = (int) old_y / block_size;
-//
-//    int new_block_x = (int) particle->x / block_size;
-//    int new_block_y = (int) particle->y / block_size;
-//
-//    // if particle moved to a new block, remove from old and put in new
-//    if(old_block_x != new_block_x || old_block_y != new_block_y){
-//        for(int i = 0; i < grid[old_block_x][old_block_y].pcount; i++){
-//            if(grid[old_block_x][old_block_y].data[i]->x == particle->x && grid[old_block_x][old_block_y].data[i]->y == particle->y){
-//                pvec::EraseParticle(grid[old_block_x][old_block_y], i);
-//                pvec::PushParticle(grid[new_block_x][new_block_y], particle);
-//                break;
-//            }
-//        }
-//    }
-//}
+    void apply_within_block (pvec::ParticleVec particles){
+        int num_particles = particles.pcount;
+        for(int i = 0; i < num_particles; i++){
+            for(int j = 0; j < num_particles; j++){
+                common::apply_force(*particles.data[i], *particles.data[j]);
+            }
+        }
+    }
+
+    void apply_across_blocks (pvec::ParticleVec particles1, pvec::ParticleVec particles2){
+        int num_particles1 = particles1.pcount;
+        int num_particles2 = particles2.pcount;
+        for(int i = 0; i < num_particles1; i++){
+            for(int j = 0; j < num_particles2; j++){
+                common::apply_force(*particles1.data[i], *particles2.data[j]);
+            }
+        }
+    }
+
+    void check_move(pvec::ParticleVec** grid, common::particle_t* particle, double old_x, double old_y, double block_size) {
+        int old_block_x = (int) old_x / block_size;
+        int old_block_y = (int) old_y / block_size;
+
+        int new_block_x = (int) particle->x / block_size;
+        int new_block_y = (int) particle->y / block_size;
+
+        // if particle moved to a new block, remove from old and put in new
+        if(old_block_x != new_block_x || old_block_y != new_block_y){
+            for(int i = 0; i < grid[old_block_x][old_block_y].pcount; i++){
+                if(grid[old_block_x][old_block_y].data[i]->x == particle->x && grid[old_block_x][old_block_y].data[i]->y == particle->y){
+                    pvec::EraseParticle(grid[old_block_x][old_block_y], i);
+                    pvec::PushParticle(grid[new_block_x][new_block_y], particle);
+                    break;
+                }
+            }
+        }
+    }
+    //void check_move(pvec::ParticleVec** grid, common::particle_t* particle, double old_x, double old_y, double block_size)
+    //{
+    //    int old_block_x = (int)old_x / block_size;
+    //    int old_block_y = (int)old_y / block_size;
+
+    //    int new_block_x = (int)particle->x / block_size;
+    //    int new_block_y = (int)particle->y / block_size;
+
+    //    // if particle moved to a new block, remove from old and put in new
+    //    if (old_block_x != new_block_x || old_block_y != new_block_y) {
+    //        for (int i = 0; i < grid[old_block_x][old_block_y].pcount; i++) {
+    //            if (grid[old_block_x][old_block_y].data[i]->x == particle->x && grid[old_block_x][old_block_y].data[i]->y == particle->y) {
+    //                pvec::EraseParticle(grid[old_block_x][old_block_y], i);
+    //                pvec::PushParticle(grid[new_block_x][new_block_y], particle);
+    //                break;
+    //            }
+    //        }
+    //    }
+    //}
 }
