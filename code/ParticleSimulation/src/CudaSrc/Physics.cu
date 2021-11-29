@@ -58,6 +58,18 @@ namespace Physics {
 
     __global__ void compute_forces_gpu(common::Block* grid, int blocks_per_side)
     {
+
+        //int tid = threadIdx.x + blockIdx.x * blockDim.x;
+        //if (tid >= blocks_per_side * blocks_per_side) return;
+
+        //int i = tid / blocks_per_side;
+        //int j = tid % blocks_per_side;
+
+        //common::Block* curr = &grid[i * blocks_per_side + j];
+        ////set acc to 0
+        //for (int k = 0; k < curr->pcount; k++) {
+        //    curr->particles[k]->ax = curr->particles[k]->ay = 0;
+        //}
        // printf(__FUNCTION__);
 
         // Get thread (particle) ID
@@ -67,45 +79,54 @@ namespace Physics {
         int i = tid / blocks_per_side;
         int j = tid % blocks_per_side;
 
+        //if (i * blocks_per_side + j >= blocks_per_side * blocks_per_side) return;
+
         common::Block& curr = grid[i * blocks_per_side + j];
-       // printf("blocks_per_side * blocks_per_side: %i\n", blocks_per_side * blocks_per_side);
+       /* printf("blocks_per_side: %i\n", blocks_per_side );
         printf("i: %i, j: %i\n", i, j);
-        printf("tid: %i\n", tid);
+        printf("index: %i\n", i * blocks_per_side + j);
+        printf("tid: %i\n", tid);*/
+        //printf("pcount: %i\n",  curr.pcount);
 
         //set acc to 0
         for (int k = 0; k < curr.pcount; k++) {
-            printf("x: %f, k: %i\n" ,curr.particles[k]->x, k);
-            //curr.particles[k]->ax = curr.particles[k]->ay = 0;
+            printf("tid:%i, x: %f, y: %f\n", tid, curr.particles[k]->x, curr.particles[k]->y);
+           // printf("test");
+            curr.particles[k]->ax = curr.particles[k]->ay = 0;
+        }
+       // printf("success!\n");
+        // check each of 8 neighbors exists, calling apply_across_blocks_gpu if so
+        if (j != blocks_per_side - 1) { //right
+            apply_across_blocks_gpu(curr, grid[i * blocks_per_side + j + 1]);
+           // printf("test1");
+
+        }
+        if (j != blocks_per_side - 1 && i != blocks_per_side - 1) { //down+right
+            apply_across_blocks_gpu(curr, grid[(i + 1) * blocks_per_side + j + 1]);
+           // printf("test2");
+
+        }
+        if (j != blocks_per_side - 1 && i != 0) { //up+right
+            apply_across_blocks_gpu(curr, grid[(i - 1) * blocks_per_side + j + 1]);
+        }
+        if (i != 0) { //up
+            apply_across_blocks_gpu(curr, grid[(i - 1) * blocks_per_side + j]);
+        }
+        if (i != blocks_per_side - 1) { //down
+            apply_across_blocks_gpu(curr, grid[(i + 1) * blocks_per_side + j]);
+        }
+        if (j != 0) { //left
+            apply_across_blocks_gpu(curr, grid[i * blocks_per_side + j - 1]);
+        }
+        if (j != 0 && i != 0) { //up+left
+            apply_across_blocks_gpu(curr, grid[(i - 1) * blocks_per_side + j - 1]);
+        }
+        if (j != 0 && i != blocks_per_side - 1) { //down+left
+            apply_across_blocks_gpu(curr, grid[(i + 1) * blocks_per_side + j - 1]);
         }
 
-        //// check each of 8 neighbors exists, calling apply_across_blocks_gpu if so
-        //if (j != blocks_per_side - 1) { //right
-        //    apply_across_blocks_gpu(curr, grid[i * blocks_per_side + j + 1]);
-        //}
-        //if (j != blocks_per_side - 1 && i != blocks_per_side - 1) { //down+right
-        //    apply_across_blocks_gpu(curr, grid[(i + 1) * blocks_per_side + j + 1]);
-        //}
-        //if (j != blocks_per_side - 1 && i != 0) { //up+right
-        //    apply_across_blocks_gpu(curr, grid[(i - 1) * blocks_per_side + j + 1]);
-        //}
-        //if (i != 0) { //up
-        //    apply_across_blocks_gpu(curr, grid[(i - 1) * blocks_per_side + j]);
-        //}
-        //if (i != blocks_per_side - 1) { //down
-        //    apply_across_blocks_gpu(curr, grid[(i + 1) * blocks_per_side + j]);
-        //}
-        //if (j != 0) { //left
-        //    apply_across_blocks_gpu(curr, grid[i * blocks_per_side + j - 1]);
-        //}
-        //if (j != 0 && i != 0) { //up+left
-        //    apply_across_blocks_gpu(curr, grid[(i - 1) * blocks_per_side + j - 1]);
-        //}
-        //if (j != 0 && i != blocks_per_side - 1) { //down+left
-        //    apply_across_blocks_gpu(curr, grid[(i + 1) * blocks_per_side + j - 1]);
-        //}
-
-        //// apply forces within the block
-        //apply_within_block_gpu(curr);
+        // apply forces within the block
+        apply_within_block_gpu(curr);
     }
 
     __global__ void move_gpu(common::Block* grid, int blocks_per_side, double size)
@@ -149,7 +170,7 @@ namespace Physics {
 
     __global__ void check_move_gpu(common::Block* grid, int blocks_per_side, double block_size)
     {
-        printf(__FUNCTION__);
+        //printf(__FUNCTION__);
 
         int tid = threadIdx.x + blockIdx.x * blockDim.x;
         if (tid >= blocks_per_side * blocks_per_side) return;
@@ -172,19 +193,40 @@ namespace Physics {
 
     }
 
+    __global__ void InitGrid_gpu(common::Block* grid, common::particle_t* particles, int blocks_per_side, double block_size, int n)
+    {
+        printf("init_grid_gpu\n");
+        for (int i = 0; i < blocks_per_side * blocks_per_side; i++) {
+            grid[i].pcount = 0;
+        }
+
+        for (size_t i = 0; i < n; i++) {
+            int block_x = (int)(particles[i].x / block_size);
+            int block_y = (int)(particles[i].y / block_size);
+            push_particle_gpu(grid[block_x * blocks_per_side + block_y], &particles[i], i);
+        }
+    }
+
+    void InitGrid(common::Block* grid, common::particle_t* particles, int blocks_per_side, double block_size, int n)
+    {
+        printf("init_grid\n");
+
+        InitGrid_gpu CUDA_KERNEL(1, 1) (grid, particles, blocks_per_side, block_size, n);
+    }
+
+    __global__ void Test()
+    {
+        printf("Test function\n");
+    }
+
     void compute_forces(int blks, int numThreads, common::Block* grid, int blocks_per_side)
     {
        // printf(__FUNCTION__);
-        cudaError_t cudaerr = cudaDeviceSynchronize();
-        if (cudaerr != cudaSuccess)
-        {
-            printf("1 kernel launch failed with error \"%s\".\n",
-                cudaGetErrorString(cudaerr));
-            __debugbreak;
-        }
+      
 
         compute_forces_gpu CUDA_KERNEL(blks, NUM_THREADS) (grid, blocks_per_side);
-        cudaerr = cudaDeviceSynchronize();
+        cudaError_t cudaerr = cudaDeviceSynchronize();
+
         if (cudaerr != cudaSuccess)
         {
             printf("2 kernel launch failed with error \"%s\".\n",
