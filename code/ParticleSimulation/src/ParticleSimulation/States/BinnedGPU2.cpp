@@ -135,7 +135,7 @@ namespace ParticleSimulation {
 		spdlog::info("init from binnedgpu");
 		
 		Physics::InitGrid(grid_gpu, particles_gpu, blocks_per_side, block_size, n);
-		Physics::Test();
+		//Physics::Test();
 		cudaerr = cudaDeviceSynchronize();
 		if (cudaerr != cudaSuccess)
 		{

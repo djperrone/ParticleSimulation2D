@@ -14,6 +14,9 @@
 
 #include "Novaura/Renderer/VertexBuffer.h"
 
+
+
+
 namespace Novaura {
 
 	struct RenderData
@@ -38,6 +41,7 @@ namespace Novaura {
 
 	void Renderer::SetClearColor(float r, float g, float b, float a)
 	{
+		
 		glClearColor(r, g, b, 1.0f);
 	}	
 

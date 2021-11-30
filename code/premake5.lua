@@ -57,6 +57,8 @@ project "ParticleSimulation"
 		"%{prj.name}/vendor/glm/glm/**.inl"
 	}
 
+	
+
 	includedirs
 	{
 		"%{prj.name}/src",		

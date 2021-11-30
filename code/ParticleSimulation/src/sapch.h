@@ -4,6 +4,10 @@
 #include <sstream>
 #include <fstream>
 
+#include <cstdlib>
+#include <cstdio>
+#include <cmath>
+
 #include <memory>
 #include <utility>
 #include <algorithm>

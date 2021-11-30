@@ -214,10 +214,7 @@ namespace Physics {
         InitGrid_gpu CUDA_KERNEL(1, 1) (grid, particles, blocks_per_side, block_size, n);
     }
 
-    __global__ void Test()
-    {
-        printf("Test function\n");
-    }
+  
 
     void compute_forces(int blks, int numThreads, common::Block* grid, int blocks_per_side)
     {
