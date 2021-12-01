@@ -21,9 +21,9 @@ namespace Novaura {
 
 	struct RenderData
 	{	
-		std::unique_ptr<VertexArray> VertexArray;
-		std::unique_ptr<IndexBuffer> IndexBuffer;
-		std::unique_ptr<VertexBuffer> VertexBuffer;
+		std::unique_ptr<VertexArray> s_VertexArray;
+		std::unique_ptr<IndexBuffer> s_IndexBuffer;
+		std::unique_ptr<VertexBuffer> s_VertexBuffer;
 
 		std::unique_ptr<Shader> TextureShader;
 		std::unique_ptr<Shader> ColorShader;
@@ -32,6 +32,23 @@ namespace Novaura {
 		glm::vec2 DefaultTextureCoords[4];
 
 		std::unique_ptr<Shader> TextRenderShader;
+
+		//std::vector<VertexData> InstancedCircleVertices;
+
+
+		
+
+		std::unique_ptr<Shader> InstancedCircleShader;
+		std::unique_ptr<VertexArray> InstancedCircleVertexArray;
+		std::unique_ptr<IndexBuffer> InstancedCircleIndexBuffer;
+		std::unique_ptr<VertexBuffer> InstancedCircleVertexBuffer;
+
+		std::unique_ptr<VertexBuffer> InstancedMatrixVertexBuffer;
+
+		glm::mat4* ModelMatrices;
+		unsigned int NumCircles;
+		const unsigned int InstancedIndexCount = 6;
+		unsigned int circleCounter = 0;
 
 	};
 
@@ -66,8 +83,8 @@ namespace Novaura {
 
 		SetClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 
-		s_RenderData.VertexArray = std::make_unique<VertexArray>();
-		s_RenderData.VertexBuffer = std::make_unique<VertexBuffer>();
+		s_RenderData.s_VertexArray = std::make_unique<VertexArray>();
+		s_RenderData.s_VertexBuffer = std::make_unique<VertexBuffer>();
 		s_RenderData.TextureShader = std::make_unique<Shader>("Assets/Shaders/TextureShader.glsl");
 		s_RenderData.ColorShader = std::make_unique<Shader>("Assets/Shaders/BasicColorShader.glsl");
 		s_RenderData.TextRenderShader = std::make_unique<Shader>("Assets/Shaders/TextRenderShader.glsl");
@@ -78,7 +95,7 @@ namespace Novaura {
 			2,3,0		
 		};		
 
-		s_RenderData.IndexBuffer = std::make_unique <IndexBuffer>(indices, numIndices);
+		s_RenderData.s_IndexBuffer = std::make_unique <IndexBuffer>(indices, numIndices);
 		 // aspect ratio
 		s_RenderData.DefaultRectangleVertices[0] = glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f);
 		s_RenderData.DefaultRectangleVertices[1] = glm::vec4( 0.5f, -0.5f, 0.0f, 1.0f);
@@ -93,6 +110,65 @@ namespace Novaura {
 
 	void Renderer::Init(const Camera& camera)
 	{
+	}
+
+	void Renderer::InitInstancedCircles(unsigned int amount)
+	{
+		s_RenderData.InstancedCircleVertexArray = std::make_unique<VertexArray>();
+		s_RenderData.InstancedCircleVertexBuffer = std::make_unique<VertexBuffer>();
+		s_RenderData.InstancedCircleShader = std::make_unique<Shader>("Assets/Shaders/InstancedCircleShader.glsl");
+
+		constexpr unsigned int numIndices = 6;
+		unsigned int indices[numIndices] = {
+			0,1,2,
+			2,3,0
+		};
+
+		s_RenderData.InstancedCircleIndexBuffer = std::make_unique <IndexBuffer>(indices, numIndices);
+		
+		std::vector<InstancedVertexData> vertices;
+		vertices.reserve(4);
+
+		//glm::mat4 transform = glm::translate(glm::mat4(1.0f), position) * glm::scale(glm::mat4(1.0f), scale);		
+
+		vertices.emplace_back(glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f ));
+		vertices.emplace_back(glm::vec4(0.5f, -0.5f, 0.0f, 1.0f));
+		vertices.emplace_back(glm::vec4(0.5f, 0.5f, 0.0f, 1.0f));
+		vertices.emplace_back(glm::vec4(-0.5f, 0.5f, 0.0f, 1.0f));
+
+		s_RenderData.InstancedCircleVertexBuffer->Bind();
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(InstancedVertexData), &vertices[0], GL_STATIC_DRAW);
+
+
+		//s_RenderData.InstancedCircleVertexBuffer->SetData(vertices);		
+
+		s_RenderData.InstancedCircleVertexArray->AddBuffer(*s_RenderData.InstancedCircleVertexBuffer, 0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), 0);
+
+
+		s_RenderData.InstancedMatrixVertexBuffer = std::make_unique<VertexBuffer>();
+		s_RenderData.InstancedMatrixVertexBuffer->Bind();
+		s_RenderData.NumCircles = amount;
+		s_RenderData.ModelMatrices = new glm::mat4[s_RenderData.NumCircles];
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * amount, &s_RenderData.ModelMatrices[0], GL_DYNAMIC_DRAW);
+
+		s_RenderData.InstancedCircleVertexArray->AddBuffer(*s_RenderData.InstancedCircleVertexBuffer, 1, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), 0);
+		s_RenderData.InstancedCircleVertexArray->AddBuffer(*s_RenderData.InstancedCircleVertexBuffer, 2, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), 0);
+		s_RenderData.InstancedCircleVertexArray->AddBuffer(*s_RenderData.InstancedCircleVertexBuffer, 3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), 0);
+		s_RenderData.InstancedCircleVertexArray->AddBuffer(*s_RenderData.InstancedCircleVertexBuffer, 4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), 0);
+
+		glVertexAttribDivisor(1, 1);
+		glVertexAttribDivisor(2, 1);
+		glVertexAttribDivisor(3, 1);
+		glVertexAttribDivisor(4, 1);
+		glBindVertexArray(0);
+		
+		
+		
+	}
+
+	void Renderer::UpdateInstancedCircleMatrices(unsigned int amount)
+	{
+		
 	}
 	
 	void Renderer::BeginScene(Shader& shader, const Camera& camera)
@@ -138,17 +214,17 @@ namespace Novaura {
 		vertices.emplace_back(transform * s_RenderData.DefaultRectangleVertices[2], color, s_RenderData.DefaultTextureCoords[2]);
 		vertices.emplace_back(transform * s_RenderData.DefaultRectangleVertices[3], color, s_RenderData.DefaultTextureCoords[3]);
 
-		s_RenderData.VertexBuffer->SetData(vertices);
-		s_RenderData.VertexArray->AddBuffer(*s_RenderData.VertexBuffer, 0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), 0);
-		s_RenderData.VertexArray->AddBuffer(*s_RenderData.VertexBuffer, 1, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), offsetof(VertexData, Color));
-		s_RenderData.VertexArray->AddBuffer(*s_RenderData.VertexBuffer, 2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexData), offsetof(VertexData, TexCoord));
+		s_RenderData.s_VertexBuffer->SetData(vertices);
+		s_RenderData.s_VertexArray->AddBuffer(*s_RenderData.s_VertexBuffer, 0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), 0);
+		s_RenderData.s_VertexArray->AddBuffer(*s_RenderData.s_VertexBuffer, 1, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), offsetof(VertexData, Color));
+		s_RenderData.s_VertexArray->AddBuffer(*s_RenderData.s_VertexBuffer, 2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexData), offsetof(VertexData, TexCoord));
 
-		s_RenderData.VertexArray->Bind();
-		s_RenderData.VertexBuffer->Bind();
-		s_RenderData.IndexBuffer->Bind();
+		s_RenderData.s_VertexArray->Bind();
+		s_RenderData.s_VertexBuffer->Bind();
+		s_RenderData.s_IndexBuffer->Bind();
 
 		//shader.SetUniform4f("u_Color", m_Color);
-		glDrawElements(GL_TRIANGLES, s_RenderData.IndexBuffer->GetCount(), GL_UNSIGNED_INT, nullptr);
+		glDrawElements(GL_TRIANGLES, s_RenderData.s_IndexBuffer->GetCount(), GL_UNSIGNED_INT, nullptr);
 		s_RenderData.TextureShader->Bind();
 	}
 
@@ -173,17 +249,17 @@ namespace Novaura {
 		vertices.emplace_back(transform * s_RenderData.DefaultRectangleVertices[2], color, s_RenderData.DefaultTextureCoords[2]);
 		vertices.emplace_back(transform * s_RenderData.DefaultRectangleVertices[3], color, s_RenderData.DefaultTextureCoords[3]);
 
-		s_RenderData.VertexBuffer->SetData(vertices);
-		s_RenderData.VertexArray->AddBuffer(*s_RenderData.VertexBuffer, 0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), 0);
-		s_RenderData.VertexArray->AddBuffer(*s_RenderData.VertexBuffer, 1, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), offsetof(VertexData, Color));
-		s_RenderData.VertexArray->AddBuffer(*s_RenderData.VertexBuffer, 2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexData), offsetof(VertexData, TexCoord));
+		s_RenderData.s_VertexBuffer->SetData(vertices);
+		s_RenderData.s_VertexArray->AddBuffer(*s_RenderData.s_VertexBuffer, 0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), 0);
+		s_RenderData.s_VertexArray->AddBuffer(*s_RenderData.s_VertexBuffer, 1, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), offsetof(VertexData, Color));
+		s_RenderData.s_VertexArray->AddBuffer(*s_RenderData.s_VertexBuffer, 2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexData), offsetof(VertexData, TexCoord));
 
-		s_RenderData.VertexArray->Bind();
-		s_RenderData.VertexBuffer->Bind();
-		s_RenderData.IndexBuffer->Bind();
+		s_RenderData.s_VertexArray->Bind();
+		s_RenderData.s_VertexBuffer->Bind();
+		s_RenderData.s_IndexBuffer->Bind();
 
 		//shader.SetUniform4f("u_Color", m_Color);
-		glDrawElements(GL_TRIANGLES, s_RenderData.IndexBuffer->GetCount(), GL_UNSIGNED_INT, nullptr);
+		glDrawElements(GL_TRIANGLES, s_RenderData.s_IndexBuffer->GetCount(), GL_UNSIGNED_INT, nullptr);
 		tex.UnBind();
 	}
 
@@ -208,17 +284,17 @@ namespace Novaura {
 		vertices.emplace_back(transform * s_RenderData.DefaultRectangleVertices[2], color, s_RenderData.DefaultTextureCoords[2]);
 		vertices.emplace_back(transform * s_RenderData.DefaultRectangleVertices[3], color, s_RenderData.DefaultTextureCoords[3]);
 
-		s_RenderData.VertexBuffer->SetData(vertices);
-		s_RenderData.VertexArray->AddBuffer(*s_RenderData.VertexBuffer, 0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), 0);
-		s_RenderData.VertexArray->AddBuffer(*s_RenderData.VertexBuffer, 1, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), offsetof(VertexData, Color));
-		s_RenderData.VertexArray->AddBuffer(*s_RenderData.VertexBuffer, 2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexData), offsetof(VertexData, TexCoord));
+		s_RenderData.s_VertexBuffer->SetData(vertices);
+		s_RenderData.s_VertexArray->AddBuffer(*s_RenderData.s_VertexBuffer, 0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), 0);
+		s_RenderData.s_VertexArray->AddBuffer(*s_RenderData.s_VertexBuffer, 1, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), offsetof(VertexData, Color));
+		s_RenderData.s_VertexArray->AddBuffer(*s_RenderData.s_VertexBuffer, 2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexData), offsetof(VertexData, TexCoord));
 
-		s_RenderData.VertexArray->Bind();
-		s_RenderData.VertexBuffer->Bind();
-		s_RenderData.IndexBuffer->Bind();
+		s_RenderData.s_VertexArray->Bind();
+		s_RenderData.s_VertexBuffer->Bind();
+		s_RenderData.s_IndexBuffer->Bind();
 
 		//shader.SetUniform4f("u_Color", m_Color);
-		glDrawElements(GL_TRIANGLES, s_RenderData.IndexBuffer->GetCount(), GL_UNSIGNED_INT, nullptr);
+		glDrawElements(GL_TRIANGLES, s_RenderData.s_IndexBuffer->GetCount(), GL_UNSIGNED_INT, nullptr);
 	}
 
 	void Renderer::DrawRotatedRectangle(const Rectangle& rectangle, std::string_view texture, const glm::vec2& quantity)
@@ -247,17 +323,17 @@ namespace Novaura {
 		vertices.emplace_back(transform * s_RenderData.DefaultRectangleVertices[2], color, s_RenderData.DefaultTextureCoords[2]);
 		vertices.emplace_back(transform * s_RenderData.DefaultRectangleVertices[3], color, s_RenderData.DefaultTextureCoords[3]);
 
-		s_RenderData.VertexBuffer->SetData(vertices);
-		s_RenderData.VertexArray->AddBuffer(*s_RenderData.VertexBuffer, 0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), 0);
-		s_RenderData.VertexArray->AddBuffer(*s_RenderData.VertexBuffer, 1, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), offsetof(VertexData, Color));
-		s_RenderData.VertexArray->AddBuffer(*s_RenderData.VertexBuffer, 2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexData), offsetof(VertexData, TexCoord));
-
-		s_RenderData.VertexArray->Bind();
-		s_RenderData.VertexBuffer->Bind();
-		s_RenderData.IndexBuffer->Bind();
+		s_RenderData.s_VertexBuffer->SetData(vertices);
+		s_RenderData.s_VertexArray->AddBuffer(*s_RenderData.s_VertexBuffer, 0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), 0);
+		s_RenderData.s_VertexArray->AddBuffer(*s_RenderData.s_VertexBuffer, 1, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), offsetof(VertexData, Color));
+		s_RenderData.s_VertexArray->AddBuffer(*s_RenderData.s_VertexBuffer, 2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexData), offsetof(VertexData, TexCoord));
+					 
+		s_RenderData.s_VertexArray->Bind();
+		s_RenderData.s_VertexBuffer->Bind();
+		s_RenderData.s_IndexBuffer->Bind();
 
 		//shader.SetUniform4f("u_Color", m_Color);
-		glDrawElements(GL_TRIANGLES, s_RenderData.IndexBuffer->GetCount(), GL_UNSIGNED_INT, nullptr);
+		glDrawElements(GL_TRIANGLES, s_RenderData.s_IndexBuffer->GetCount(), GL_UNSIGNED_INT, nullptr);
 		tex.UnBind();
 	}
 
@@ -345,6 +421,19 @@ namespace Novaura {
 		glBindTexture(GL_TEXTURE_2D, 0);
 
 		spdlog::info("{0}, {1}", startingXpos, endXPos);
+	}
+
+	void Renderer::DrawInstancedCircle(const Rectangle& rectangle, const glm::vec2& quantity)
+	{
+		DrawInstancedCircle(rectangle.GetPosition(), rectangle.GetScale(), rectangle.GetColor(), quantity);
+	}
+
+	// update model matrix
+	// set matrices[currenctCircle++] = parameters
+	// Create EndInstancedScene to draw
+	void Renderer::DrawInstancedCircle(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& color, const glm::vec2& quantity)
+	{
+
 	}
 
 

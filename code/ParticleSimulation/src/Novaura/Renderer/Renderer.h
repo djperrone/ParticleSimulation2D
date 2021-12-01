@@ -21,21 +21,23 @@ namespace Novaura {
 		static void DrawRectangle(const Rectangle& rectangle, const glm::vec2& quantity = { 1.0f,1.0f });
 		static void DrawRectangle(const Rectangle& rectangle, std::string_view texture, const glm::vec2& quantity = { 1.0f,1.0f });
 
-
 		static void DrawRotatedRectangle(const Rectangle& rectangle, const glm::vec2& quantity = { 1.0f,1.0f });
 		static void DrawRotatedRectangle(const Rectangle& rectangle, std::string_view texture, const glm::vec2& quantity = { 1.0f,1.0f });
-
-	
-
 
 		static void DrawRectangle(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& color, const glm::vec2& quantity = { 1.0f,1.0f });
 		static void DrawRectangle(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& color, std::string_view texture, const glm::vec2& quantity = { 1.0f,1.0f });
 
-
-
 		static void DrawRotatedRectangle(const glm::vec3& position, const glm::vec3& scale, float rotation, const glm::vec4& color, const glm::vec2& quantity = { 1.0f,1.0f });
 		static void DrawRotatedRectangle(const glm::vec3& position, const glm::vec3& scale, float rotation, const glm::vec4& color, std::string_view texture, const glm::vec2& quantity = { 1.0f,1.0f });
 		static void RenderText(std::string text, float x, float y, float scale, glm::vec3 color);
+
+		//static void DrawInstancedCircle();
+		static void DrawInstancedCircle(const Rectangle& rectangle, const glm::vec2& quantity = { 1.0f,1.0f });
+		static void DrawInstancedCircle(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& color, const glm::vec2& quantity = { 1.0f,1.0f });
+
+		static void InitInstancedCircles(unsigned int amount);
+
+		static void UpdateInstancedCircleMatrices(unsigned int amount);
 
 	};
 }
