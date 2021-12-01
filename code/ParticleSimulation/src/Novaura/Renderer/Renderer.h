@@ -18,6 +18,7 @@ namespace Novaura {
 
 		static void BeginScene(Shader& shader, const Camera& camera);
 		static void BeginScene(const Camera& camera);
+		static void BeginSceneInstanced(const Camera& camera);
 		static void DrawRectangle(const Rectangle& rectangle, const glm::vec2& quantity = { 1.0f,1.0f });
 		static void DrawRectangle(const Rectangle& rectangle, std::string_view texture, const glm::vec2& quantity = { 1.0f,1.0f });
 
@@ -38,6 +39,7 @@ namespace Novaura {
 		static void InitInstancedCircles(unsigned int amount);
 
 		static void UpdateInstancedCircleMatrices(unsigned int amount);
+		static void EndInstancedCircles();
 
 	};
 }

@@ -40,7 +40,7 @@ namespace Novaura {
 		m_CameraController = std::make_shared<CameraController>(width, height);
 		InputHandler::Init();
 		InputHandler::SetCurrentWindow(m_Context.GetWindow());
-		Novaura::BatchRenderer::Init();
+		//Novaura::BatchRenderer::Init();
 		Novaura::Renderer::Init();
 
 		Random::Init();

@@ -1,5 +1,5 @@
 #include "sapch.h"
-#include "BinnedCPU.h"
+#include "InstancedBinnedCPU.h"
 
 #include "Novaura/Novaura.h"
 #include "Novaura/Collision/Collision.h"
@@ -13,7 +13,7 @@
 namespace ParticleSimulation {
 	
 
-	BinnedCPU::BinnedCPU()
+	InstancedBinnedCPU::InstancedBinnedCPU()
 	{
 		m_Window = Novaura::InputHandler::GetCurrentWindow();
 		m_CameraController = Novaura::Application::GetCameraController();
@@ -21,7 +21,7 @@ namespace ParticleSimulation {
 		OnEnter();
 	}
 	
-	BinnedCPU::BinnedCPU(std::shared_ptr<Novaura::Window> window, std::shared_ptr<Novaura::CameraController> cameraController, std::shared_ptr<Novaura::StateMachine> stateMachine)
+	InstancedBinnedCPU::InstancedBinnedCPU(std::shared_ptr<Novaura::Window> window, std::shared_ptr<Novaura::CameraController> cameraController, std::shared_ptr<Novaura::StateMachine> stateMachine)
 		: m_StateInfo()
 	{
 		m_Window = window;
@@ -33,27 +33,14 @@ namespace ParticleSimulation {
 		OnEnter();
 	}
 
-	BinnedCPU::~BinnedCPU()
+	InstancedBinnedCPU::~InstancedBinnedCPU()
 	{
 		OnExit();
 	}
 
-	void BinnedCPU::OnEnter()
+	void InstancedBinnedCPU::OnEnter()
 	{
-		//glfwSetInputMode(Novaura::InputHandler::GetCurrentWindow()->Window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-		
-		//Novaura::InputHandler::GetCurrentController().BindActionInputEvent(GLFW_PRESS, GLFW_KEY_ESCAPE, &BinnedCPU::Pause, this);
-		//Novaura::InputHandler::GetCurrentController().BindActionInputEvent(GLFW_PRESS, GLFW_KEY_ESCAPE, &BinnedCPU::Pause, this);
-
-		Novaura::BatchRenderer::Init();
-
-		
-
-		
-		
-		//particles = (common::particle_t*)malloc(common::ParticleData::num_particles * sizeof(common::particle_t));
-		//common::set_size(common::ParticleData::num_particles);
-		//common::init_particles(common::ParticleData::num_particles, particles);
+		Novaura::Renderer::InitInstancedCircles(common::ParticleData::num_particles);
 
 		particles = (common::particle_t*)malloc(common::ParticleData::num_particles * sizeof(common::particle_t));
 		common::set_size(common::ParticleData::num_particles);
@@ -84,15 +71,15 @@ namespace ParticleSimulation {
 		m_StateInfo.RESET = false;
 	}
 
-	void BinnedCPU::HandleInput()
+	void InstancedBinnedCPU::HandleInput()
 	{
 	}
 
-	void BinnedCPU::Update(float deltaTime)
+	void InstancedBinnedCPU::Update(float deltaTime)
 	{		
 		if (m_StateInfo.RESET)
 		{
-			//m_StateMachine->ReplaceCurrentState(std::make_unique<ParticleSimulation::BinnedCPU>());
+			//m_StateMachine->ReplaceCurrentState(std::make_unique<ParticleSimulation::InstancedBinnedCPU>());
 			OnExit();
 			OnEnter();
 		}
@@ -156,12 +143,12 @@ namespace ParticleSimulation {
 
 	}
 
-	void BinnedCPU::Draw(float deltaTime)
+	void InstancedBinnedCPU::Draw(float deltaTime)
 	{
 		
-		Novaura::BatchRenderer::SetClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		Novaura::BatchRenderer::Clear();
-		Novaura::BatchRenderer::BeginScene(m_CameraController->GetCamera());	
+		Novaura::Renderer::SetClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		Novaura::Renderer::Clear();
+		Novaura::Renderer::BeginSceneInstanced(m_CameraController->GetCamera());	
 		m_Gui->BeginFrame();
 
 		float width = Novaura::InputHandler::GetCurrentWindow()->Width;
@@ -170,10 +157,10 @@ namespace ParticleSimulation {
 		//float scale = common::ParticleData::density * 60.0f;
 		//Novaura::BatchRenderer::StencilDraw(glm::vec3(0.5f, 0.5f, 0.0f), glm::vec3(0.25f, 0.25f, 0.0f), glm::vec4(0.5f, 0.1f, 0.8f, 1.0f), glm::vec4(0.1f, 0.8f, 0.1f, 1.0f));
 		//Novaura::BatchRenderer::StencilDraw(glm::vec3(0.5f, 0.0f, 0.0f), glm::vec3(2.0f, 1.5f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f));
-		Novaura::BatchRenderer::DrawRectangle(glm::vec3(-0.65f, 0.1f, 0.0f), glm::vec3(common::ParticleData::size, common::ParticleData::size, 1.0), glm::vec4(0.2f, 0.2f, 0.8f, 1.0f));
+		//Novaura::BatchRenderer::DrawRectangle(glm::vec3(-0.65f, 0.1f, 0.0f), glm::vec3(common::ParticleData::size, common::ParticleData::size, 1.0), glm::vec4(0.2f, 0.2f, 0.8f, 1.0f));
 		for (int i = 0; i < common::ParticleData::num_particles; i++)
 		{
-			Novaura::BatchRenderer::DrawCircle(glm::vec3(particles[i].x -1.5f, particles[i].y-0.75, 0), glm::vec3(particleScale, particleScale, 0), glm::vec4(0.8f, 0.2f, 0.2f, 1.0f), glm::vec2(1.0f, 1.0f));
+			Novaura::Renderer::DrawInstancedCircle(glm::vec3(particles[i].x -1.5f, particles[i].y-0.75, 0), glm::vec3(particleScale, particleScale, 0), glm::vec4(0.8f, 0.2f, 0.2f, 1.0f), glm::vec2(1.0f, 1.0f));
 		}
 
 		
@@ -183,7 +170,8 @@ namespace ParticleSimulation {
 				Novaura::BatchRenderer::DrawRotatedRectangle(object->GetRectangle(), object->GetTextureFile());
 		}	*/	
 
-		Novaura::BatchRenderer::EndScene();
+		//Novaura::BatchRenderer::EndScene();
+		Novaura::Renderer::EndInstancedCircles();
 		m_Gui->DrawStateButtons(m_StateInfo, particleScale);
 		//m_Gui->Draw();
 		//m_Gui->DrawDockSpace(m_StateInfo);
@@ -192,7 +180,7 @@ namespace ParticleSimulation {
 
 	
 
-	void BinnedCPU::OnExit()
+	void InstancedBinnedCPU::OnExit()
 	{
 		//glfwSetInputMode(Novaura::InputHandler::GetCurrentWindow()->Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		spdlog::info(__FUNCTION__);
@@ -200,7 +188,7 @@ namespace ParticleSimulation {
 		pvec::FreeGrid(grid, m_BlocksPerSide);
 	}
 
-	void BinnedCPU::Pause()
+	void InstancedBinnedCPU::Pause()
 	{
 		//glfwSetInputMode(Novaura::InputHandler::GetCurrentWindow()->Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
@@ -208,7 +196,7 @@ namespace ParticleSimulation {
 		
 	}
 
-	void BinnedCPU::Resume()
+	void InstancedBinnedCPU::Resume()
 	{
 		//Novaura::InputHandler::SetCurrentController(m_InputController);
 		//glfwSetInputMode(Novaura::InputHandler::GetCurrentWindow()->Window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
