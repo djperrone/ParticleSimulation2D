@@ -42,10 +42,7 @@ namespace ParticleSimulation {
 		StateInfo m_StateInfo;
 		
 
-		common::particle_t* particles;
-		
-		
-		
+		common::particle_t* particles;		
 
 		//int n;
 		double simulation_time;

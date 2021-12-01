@@ -114,6 +114,13 @@ namespace Novaura {
 		s_RenderData.DefaultTextureCoords[1] = glm::vec2(1.0f, 0.0f);
 		s_RenderData.DefaultTextureCoords[2] = glm::vec2(1.0f, 1.0f);
 		s_RenderData.DefaultTextureCoords[3] = glm::vec2(0.0f, 1.0f);
+
+		s_RenderData.InstancedCircleShader = std::make_unique<Shader>("Assets/Shaders/InstancedCircleShader.glsl");
+		glGenVertexArrays(1, &s_RenderData.sphereVAO);
+		glGenBuffers(1, &s_RenderData.vbo);
+		glGenBuffers(1, &s_RenderData.ebo);
+		glGenBuffers(1, &s_RenderData.instanceVBO);
+
 	}
 
 	void Renderer::Init(const Camera& camera)
@@ -384,42 +391,25 @@ namespace Novaura {
 
 	
 
-	void Renderer::InitInstancedCircles(unsigned int amount, float scale)
+	void Renderer::InitInstancedCircles(unsigned int amount, float scale, const glm::vec4& color)
 	{
-		s_RenderData.InstancedCircleShader = std::make_unique<Shader>("Assets/Shaders/InstancedCircleShader.glsl");
-		glGenVertexArrays(1, &s_RenderData.sphereVAO);
-		glGenBuffers(1, &s_RenderData.vbo);
-		glGenBuffers(1, &s_RenderData.ebo);
+		constexpr unsigned int numIndices = 6;
 
-
-		/*glGenBuffers(1, &s_RenderData.instanceVBO);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		s_RenderData.MaxCircles = amount;
-		s_RenderData.ModelMatrices = new glm::mat4[s_RenderData.MaxCircles];
-		glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &s_RenderData.ModelMatrices[0], GL_STATIC_DRAW);*/
-
-		
-
-			constexpr unsigned int numIndices = 6;
-	unsigned int indices[numIndices] = {
-		0,1,2,
-		2,3,0
-	};
-
+		unsigned int indices[numIndices] = {
+			0,1,2,
+			2,3,0
+		};
 
 		std::vector<InstancedVertexData> vertices;
 		vertices.reserve(4);	
 	
-		vertices.emplace_back(glm::vec4(-0.5f, -0.5f, 0.0f, scale));
-		vertices.emplace_back(glm::vec4(0.5f, -0.5f, 0.0f, scale));
-		vertices.emplace_back(glm::vec4(0.5f, 0.5f, 0.0f, scale));
-		vertices.emplace_back(glm::vec4(-0.5f, 0.5f, 0.0f, scale));
-
+		vertices.emplace_back(glm::vec4(-0.5f, -0.5f, 0.0f, scale), color);
+		vertices.emplace_back(glm::vec4(0.5f, -0.5f, 0.0f, scale), color);
+		vertices.emplace_back(glm::vec4(0.5f, 0.5f, 0.0f, scale), color);
+		vertices.emplace_back(glm::vec4(-0.5f, 0.5f, 0.0f, scale), color);
 
 		glBindVertexArray(s_RenderData.sphereVAO);
 		s_RenderData.MaxCircles = amount;
-
-
 
 		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.vbo);
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(InstancedVertexData), &vertices[0], GL_STATIC_DRAW);
@@ -428,70 +418,40 @@ namespace Novaura {
 
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertexData), (void*)0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_RenderData.ebo);
-
-		
-
-		InitVertexLocations();
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertexData), (void*)offsetof(InstancedVertexData, Color));
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_RenderData.ebo);	
 
 		s_RenderData.ModelMatrices = new glm::mat4[s_RenderData.MaxCircles];
 
-		glGenBuffers(1, &s_RenderData.instanceVBO);
 		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.instanceVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * amount, &s_RenderData.ModelMatrices[0], GL_DYNAMIC_DRAW);
 		glBindVertexArray(s_RenderData.sphereVAO);		
 
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
 		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
 		glEnableVertexAttribArray(3);
-		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
 		glEnableVertexAttribArray(4);
-		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+		glEnableVertexAttribArray(5);
+		glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
 
-		glVertexAttribDivisor(1, 1);
 		glVertexAttribDivisor(2, 1);
 		glVertexAttribDivisor(3, 1);
 		glVertexAttribDivisor(4, 1);
-
-		
-
-	}
-
-	void Renderer::InitVertexLocations()
-	{
-		//s_RenderData.VertexPositions = new glm::vec3[s_RenderData.MaxCircles];
-
-		//glGenBuffers(1, &s_RenderData.instancePositionVBO);
-		//glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.instancePositionVBO);
-
-		//glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * s_RenderData.MaxCircles, &s_RenderData.VertexPositions[0], GL_DYNAMIC_DRAW);
-		//glBindVertexArray(s_RenderData.sphereVAO);
-
-		//glEnableVertexAttribArray(1);
-		//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-		//glVertexAttribDivisor(1, 1);
-		
-	}
+		glVertexAttribDivisor(5, 1);	
+	}	
 
 	void Renderer::DrawInstancedCircle(const Rectangle& rectangle, const glm::vec2& quantity)
 	{
 		DrawInstancedCircle(rectangle.GetPosition(), rectangle.GetScale(), rectangle.GetColor(), quantity);
 	}
-
-	// update model matrix
-	// set matrices[currenctCircle++] = parameters
-	// Create EndInstancedScene to draw
+	
 	void Renderer::DrawInstancedCircle(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& color, const glm::vec2& quantity)
 	{
-		//s_RenderData.VertexPositions[s_RenderData.CircleCounter] = glm::vec3(position.x, position.y,scale.x);
-
-
 		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, position) * glm::scale(glm::mat4(1.0f), scale);
-
-		//s_RenderData.ModelMatrices[s_RenderData.CircleCounter] = glm::mat4(1.0f);
+		model = glm::translate(model, position) * glm::scale(glm::mat4(1.0f), scale);		
 		s_RenderData.ModelMatrices[s_RenderData.CircleCounter++] = model;
 	}
 
@@ -505,81 +465,17 @@ namespace Novaura {
 	{
 		glBindVertexArray(s_RenderData.sphereVAO);
 
-		if (s_RenderData.CircleCounter != s_RenderData.MaxCircles) spdlog::info(__FUNCTION__,"not enough circles?...");
-		//s_RenderData.InstancedMatrixVertexBuffer->Bind();
-		//glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.instancePositionVBO);
-		//glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * s_RenderData.CircleCounter, &s_RenderData.VertexPositions[0], GL_DYNAMIC_DRAW);
+		if (s_RenderData.CircleCounter != s_RenderData.MaxCircles) spdlog::info(__FUNCTION__,"not enough circles?...");		
 
 		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.instanceVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * s_RenderData.CircleCounter, &s_RenderData.ModelMatrices[0], GL_DYNAMIC_DRAW);
-
-		//s_RenderData.InstancedCircleVertexArray->Bind();
-		//s_RenderData.InstancedCircleShader->Bind();
-		glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, s_RenderData.CircleCounter);
-		//glDrawArraysInstanced(GL_TRIANGLES, 0, 6, s_RenderData.CircleCounter);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * s_RenderData.CircleCounter, &s_RenderData.ModelMatrices[0], GL_DYNAMIC_DRAW);		
+		glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, s_RenderData.CircleCounter);		
 
 		s_RenderData.CircleCounter = 0;
 	}
 	
 	void Renderer::ShutdownInstancedCircles()
 	{
-		delete[] s_RenderData.ModelMatrices;
-		//delete[] s_RenderData.VertexPositions;
+		delete[] s_RenderData.ModelMatrices;		
 	}
-
 }
-
-
-//void Renderer::InitInstancedCircles(unsigned int amount)
-//{
-//	s_RenderData.InstancedCircleVertexArray = std::make_unique<VertexArray>();
-//	s_RenderData.InstancedCircleVertexArray->Bind();
-//	s_RenderData.InstancedCircleVertexBuffer = std::make_unique<VertexBuffer>();
-//	s_RenderData.InstancedCircleVertexBuffer->Bind();
-//
-//	s_RenderData.InstancedCircleShader = std::make_unique<Shader>("Assets/Shaders/InstancedCircleShader.glsl");
-//
-//	constexpr unsigned int numIndices = 6;
-//	unsigned int indices[numIndices] = {
-//		0,1,2,
-//		2,3,0
-//	};
-//
-//	s_RenderData.InstancedCircleIndexBuffer = std::make_unique <IndexBuffer>(indices, numIndices);
-//
-//	std::vector<InstancedVertexData> vertices;
-//	vertices.reserve(4);
-//
-//	//glm::mat4 transform = glm::translate(glm::mat4(1.0f), position) * glm::scale(glm::mat4(1.0f), scale);		
-//
-//	vertices.emplace_back(glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f));
-//	vertices.emplace_back(glm::vec4(0.5f, -0.5f, 0.0f, 1.0f));
-//	vertices.emplace_back(glm::vec4(0.5f, 0.5f, 0.0f, 1.0f));
-//	vertices.emplace_back(glm::vec4(-0.5f, 0.5f, 0.0f, 1.0f));
-//
-//	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(InstancedVertexData), &vertices[0], GL_STATIC_DRAW);
-//
-//
-//	//s_RenderData.InstancedCircleVertexBuffer->SetData(vertices);		
-//
-//	s_RenderData.InstancedCircleVertexArray->AddBuffer(*s_RenderData.InstancedCircleVertexBuffer, 0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), 0);
-//
-//
-//	s_RenderData.InstancedMatrixVertexBuffer = std::make_unique<VertexBuffer>();
-//	s_RenderData.InstancedMatrixVertexBuffer->Bind();
-//	s_RenderData.MaxCircles = amount;
-//	s_RenderData.ModelMatrices = new glm::mat4[s_RenderData.MaxCircles];
-//	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * amount, &s_RenderData.ModelMatrices[0], GL_DYNAMIC_DRAW);
-//
-//	s_RenderData.InstancedCircleVertexArray->AddBuffer(*s_RenderData.InstancedCircleVertexBuffer, 1, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), 0);
-//	s_RenderData.InstancedCircleVertexArray->AddBuffer(*s_RenderData.InstancedCircleVertexBuffer, 2, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), 0);
-//	s_RenderData.InstancedCircleVertexArray->AddBuffer(*s_RenderData.InstancedCircleVertexBuffer, 3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), 0);
-//	s_RenderData.InstancedCircleVertexArray->AddBuffer(*s_RenderData.InstancedCircleVertexBuffer, 4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), 0);
-//
-//	glVertexAttribDivisor(1, 1);
-//	glVertexAttribDivisor(2, 1);
-//	glVertexAttribDivisor(3, 1);
-//	glVertexAttribDivisor(4, 1);
-//	glBindVertexArray(0);
-//
-//}

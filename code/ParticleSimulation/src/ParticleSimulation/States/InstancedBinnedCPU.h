@@ -29,13 +29,14 @@ namespace ParticleSimulation {
 
 		virtual void Pause() override;
 		virtual void Resume() override;
-
 	
 	private:		
 
 		double m_CurrentTime = 0.0;
 		double m_PreviousTime = 0.0;
-		float particleScale = 0.05f;
+
+		float particleScale = 0.2f;
+		glm::vec4 particleColor = glm::vec4(0.8f, 0.2f, 0.2f, 1.0f);
 
 		int m_BlocksPerSide;
 

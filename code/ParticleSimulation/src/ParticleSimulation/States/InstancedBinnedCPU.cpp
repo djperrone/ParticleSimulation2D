@@ -40,7 +40,7 @@ namespace ParticleSimulation {
 
 	void InstancedBinnedCPU::OnEnter()
 	{
-		Novaura::Renderer::InitInstancedCircles(common::ParticleData::num_particles, particleScale);
+		Novaura::Renderer::InitInstancedCircles(common::ParticleData::num_particles, particleScale, particleColor);
 
 		particles = (common::particle_t*)malloc(common::ParticleData::num_particles * sizeof(common::particle_t));
 		common::set_size(common::ParticleData::num_particles);
@@ -52,17 +52,14 @@ namespace ParticleSimulation {
 		if (block_size < .01) {
 			m_BlocksPerSide = (int)common::ParticleData::size / common::ParticleData::cutoff;
 			block_size = common::ParticleData::size / m_BlocksPerSide;
-		}
-		
-		
+		}		
 
 		grid = pvec::InitGrid3d(m_BlocksPerSide);
 		// fill the grid
 		for (int i = 0; i < common::ParticleData::num_particles; i++) {
 			int block_x = (int)particles[i].x / block_size;
 			int block_y = (int)particles[i].y / block_size;
-
-			//grid[block_x][block_y].push_back(&particles[i]);
+			
 			pvec::PushParticle(grid[block_x][block_y], (&particles[i]));
 		}
 
@@ -133,14 +130,8 @@ namespace ParticleSimulation {
 				double old_y = particles[i].y;
 				common::move(particles[i], 0.005f);
 				Physics::check_move(grid, &particles[i], old_x, old_y, m_BlocksPerSide);
-			}
-			
-
-			
-			
+			}			
 		}
-		
-
 	}
 
 	void InstancedBinnedCPU::Draw(float deltaTime)
@@ -154,27 +145,16 @@ namespace ParticleSimulation {
 		float width = Novaura::InputHandler::GetCurrentWindow()->Width;
 		float height = Novaura::InputHandler::GetCurrentWindow()->Height;
 		float aspectRatio = Novaura::InputHandler::GetCurrentWindow()->AspectRatio;		
-		//float scale = common::ParticleData::density * 60.0f;
-		//Novaura::BatchRenderer::StencilDraw(glm::vec3(0.5f, 0.5f, 0.0f), glm::vec3(0.25f, 0.25f, 0.0f), glm::vec4(0.5f, 0.1f, 0.8f, 1.0f), glm::vec4(0.1f, 0.8f, 0.1f, 1.0f));
-		//Novaura::BatchRenderer::StencilDraw(glm::vec3(0.5f, 0.0f, 0.0f), glm::vec3(2.0f, 1.5f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f));
-		//Novaura::BatchRenderer::DrawRectangle(glm::vec3(-0.65f, 0.1f, 0.0f), glm::vec3(common::ParticleData::size, common::ParticleData::size, 1.0), glm::vec4(0.2f, 0.2f, 0.8f, 1.0f));
+		
 		for (int i = 0; i < common::ParticleData::num_particles; i++)
 		{
 			Novaura::Renderer::DrawInstancedCircle(glm::vec3(particles[i].x -1.5f, particles[i].y-0.75, 0), glm::vec3(particleScale, particleScale, 0), glm::vec4(0.8f, 0.2f, 0.2f, 1.0f), glm::vec2(1.0f, 1.0f));
-		}
-
-		
-		/*for (auto& object : m_ObjectManager->GetCharacterList())
-		{
-			if(object->IsAlive())
-				Novaura::BatchRenderer::DrawRotatedRectangle(object->GetRectangle(), object->GetTextureFile());
-		}	*/	
+		}	
 
 		//Novaura::BatchRenderer::EndScene();
 		Novaura::Renderer::EndInstancedCircles();
 		m_Gui->DrawStateButtons(m_StateInfo, particleScale);
-		//m_Gui->Draw();
-		//m_Gui->DrawDockSpace(m_StateInfo);
+		
 		m_Gui->EndFrame();
 	}
 
@@ -186,6 +166,7 @@ namespace ParticleSimulation {
 		spdlog::info(__FUNCTION__);
 		free(particles);
 		pvec::FreeGrid(grid, m_BlocksPerSide);
+		Novaura::Renderer::ShutdownInstancedCircles();
 	}
 
 	void InstancedBinnedCPU::Pause()
