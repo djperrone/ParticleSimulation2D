@@ -18,10 +18,10 @@ namespace Novaura{
 
 	struct InstancedVertexData
 	{
-		InstancedVertexData(const::glm::vec3& position)
+		InstancedVertexData(const::glm::vec4& position)
 			: Position(position) {}
 		//VertexData(const::glm::vec3& position, const glm::vec4& color, const glm::vec2& texCoord) : Position(position), Color(color), TexCoord(texCoord) {}
-		glm::vec3 Position;
+		glm::vec4 Position;
 		/*glm::vec4 Color;
 		glm::vec2 TexCoord;
 		glm::vec2 Quantity = glm::vec2(1.0f, 1.0f);

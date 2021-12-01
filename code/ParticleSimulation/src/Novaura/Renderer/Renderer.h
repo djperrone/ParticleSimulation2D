@@ -36,10 +36,12 @@ namespace Novaura {
 		static void DrawInstancedCircle(const Rectangle& rectangle, const glm::vec2& quantity = { 1.0f,1.0f });
 		static void DrawInstancedCircle(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& color, const glm::vec2& quantity = { 1.0f,1.0f });
 
-		static void InitInstancedCircles(unsigned int amount);
-
+		static void InitInstancedCircles(unsigned int amount, float scale);
+		static void InitVertexLocations();
 		static void UpdateInstancedCircleMatrices(unsigned int amount);
 		static void EndInstancedCircles();
+
+		static void ShutdownInstancedCircles();
 
 	};
 }

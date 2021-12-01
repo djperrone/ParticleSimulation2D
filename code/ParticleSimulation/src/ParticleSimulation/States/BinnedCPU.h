@@ -35,7 +35,7 @@ namespace ParticleSimulation {
 
 		double m_CurrentTime = 0.0;
 		double m_PreviousTime = 0.0;
-		float particleScale = 0.05f;
+		float particleScale = 1.f;
 
 		int m_BlocksPerSide;
 

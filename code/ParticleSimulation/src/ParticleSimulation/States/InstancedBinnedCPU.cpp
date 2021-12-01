@@ -40,7 +40,7 @@ namespace ParticleSimulation {
 
 	void InstancedBinnedCPU::OnEnter()
 	{
-		Novaura::Renderer::InitInstancedCircles(common::ParticleData::num_particles);
+		Novaura::Renderer::InitInstancedCircles(common::ParticleData::num_particles, particleScale);
 
 		particles = (common::particle_t*)malloc(common::ParticleData::num_particles * sizeof(common::particle_t));
 		common::set_size(common::ParticleData::num_particles);
