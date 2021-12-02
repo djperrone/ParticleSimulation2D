@@ -9,6 +9,7 @@ namespace CudaMath {
 	
 	__global__ void MatMul_gpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int N)
 	{
+		printf("matmul gpu\n");
 		int ROW = blockIdx.y * blockDim.y + threadIdx.y;
 		int COL = blockIdx.x * blockDim.x + threadIdx.x;
 		float tmpSum = 0;
@@ -20,34 +21,141 @@ namespace CudaMath {
 			}
 		}
 		C->mat[ROW * N + COL] = tmpSum;
+
+	}
+
+	__global__ void MatMulTest_gpu()
+	{
+
+		/*int N = 4;
+
+		FlatMatrix A, B, C;
+
+		ZERO_FLAT_MATRIX(C);
+
+		MakeTranslation_gpu(&A, Vector3f({ 2.0f,3.0f,4.0f }));
+		MakeScale_gpu(&A, Vector3f({ 0.5f,0.5,0.5f }));
+
+		dim3 threadsPerBlock(N, N);
+		dim3 blocksPerGrid(1, 1);
+		if (N * N > 16)
+		{
+			threadsPerBlock.x = 16;
+			threadsPerBlock.y = 16;
+			blocksPerGrid.x = ceil(double(N) / double(threadsPerBlock.x));
+			blocksPerGrid.y = ceil(double(N) / double(threadsPerBlock.y));
+		}
+
+		MatMul_gpu CUDA_KERNEL(blocksPerGrid, threadsPerBlock) (&A, &B, &C, N);*/
+		//cudaDeviceSynchronize();
+
+
+		//glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 3.0f, 4.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
+
+		//for (int i = 0; i < 4; i++)
+		//{
+		//	for (int j = 0; j < 4; j++)
+		//	{
+		//		if (C.mat[j + i * 4] != model[i][j])
+		//		{
+		//			//std::cout << myMat.mat[j + i * 4] >> '\n';
+		//			printf("error identity\n");
+		//		}
+		//	}
+
+		//}
+
 	}
 	
 	
-	__device__ void CudaMath::MakeIdentity_gpu(FlatMatrix* dest)
-	{
-		dest->rows[0] = Vector4f({ 1.0f, 0.0f, 0.0f, 0.0f });
-		dest->rows[1] = Vector4f({ 0.0f, 1.0f, 0.0f, 0.0f });
-		dest->rows[2] = Vector4f({ 0.0f, 0.0f, 1.0f, 0.0f });
-		dest->rows[3] = Vector4f({ 0.0f, 0.0f, 0.0f, 1.0f });
-	}
-	__device__ void MakeScale_gpu(FlatMatrix* dest, const Vector3f& vec)
-	{
-		dest->rows[0] = Vector4f({ vec.x, 0.0f, 0.0f, 0.0f });
-		dest->rows[1] = Vector4f({ 0.0f, vec.y, 0.0f, 0.0f });
-		dest->rows[2] = Vector4f({ 0.0f, 0.0f, vec.z, 0.0f });
-		dest->rows[3] = Vector4f({ 0.0f, 0.0f, 0.0f, 1.0f });
 
-		printf("[] x: {%f}, y: {%f}, z: {%f}", vec.vec[0], vec.vec[1], vec.vec[2]);
-		printf("x: {%f}, y: {%f}, z: {%f}", vec.x, vec.y, vec.z);
+	void MatMulTest_cpu()
+	{	
+		printf("matmul cpu\n");
+
+		/*cudaDeviceSynchronize();
+
+		MatMulTest_gpu CUDA_KERNEL(1, 1)();
+		cudaDeviceSynchronize();*/
+
+		int N = 4;
+
+		FlatMatrix A, B, C;
+
+		ZERO_FLAT_MATRIX(C);
+		//Vector3f svec{ 0.5f,0.5,0.5f };
+		Vector3f tvec{ 2.0f,3.0f,4.0f };
+
+		MAKE_TRANSLATION(A, tvec);
+		//MAKE_SCALE(B, svec);
+		MAKE_IDENTITY(B);
+
+		//MakeTranslation_gpu(&A, );
+		//MakeScale_gpu(&A, Vector3f({ 0.5f,0.5,0.5f }));
+
+		/*A.rows[0] = Vector4f({ svec.x, 0.0f, 0.0f, 0.0f });
+		A.rows[1] = Vector4f({ 0.0f, svec.y, 0.0f, 0.0f });
+		A.rows[2] = Vector4f({ 0.0f, 0.0f, svec.z, 0.0f });
+		A.rows[3] = Vector4f({ 0.0f, 0.0f, 0.0f, 1.0f });*/
+
+		dim3 threadsPerBlock(N, N);
+		dim3 blocksPerGrid(1, 1);
+		if (N * N > 16)
+		{
+			threadsPerBlock.x = 16;
+			threadsPerBlock.y = 16;
+			blocksPerGrid.x = ceil(double(N) / double(threadsPerBlock.x));
+			blocksPerGrid.y = ceil(double(N) / double(threadsPerBlock.y));
+		}
+
+		MatMul_gpu CUDA_KERNEL(blocksPerGrid, threadsPerBlock) (&A, &B, &C, N);
+
+		cudaDeviceSynchronize();
+
+
+		glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 3.0f, 4.0f));
+
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				if (C.mat[j + i * 4] != model[i][j])
+				{
+					//std::cout << myMat.mat[j + i * 4] >> '\n';
+					printf("error mult\n");
+				}
+			}
+
+		}
+
 	}
 
-	__device__ void MakeTranslation_gpu(FlatMatrix* dest, const Vector3f& vec)
-	{
-		dest->rows[0] = Vector4f({ 1.0f, 0.0f, 0.0f, 0.0f });
-		dest->rows[1] = Vector4f({ 0.0f, 1.0f, 0.0f, 0.0f });
-		dest->rows[2] = Vector4f({ 0.0f, 0.0f, 1.0f, 0.0f });
-		dest->rows[3] = Vector4f({ vec.x, vec.y, vec.z, 1.0f });
-	}
+	
+	//__device__ void CudaMath::MakeIdentity_gpu(FlatMatrix* dest)
+	//{
+	//	dest->rows[0] = Vector4f({ 1.0f, 0.0f, 0.0f, 0.0f });
+	//	dest->rows[1] = Vector4f({ 0.0f, 1.0f, 0.0f, 0.0f });
+	//	dest->rows[2] = Vector4f({ 0.0f, 0.0f, 1.0f, 0.0f });
+	//	dest->rows[3] = Vector4f({ 0.0f, 0.0f, 0.0f, 1.0f });
+	//}
+	//__device__ void MakeScale_gpu(FlatMatrix* dest, const Vector3f& vec)
+	//{
+	//	dest->rows[0] = Vector4f({ vec.x, 0.0f, 0.0f, 0.0f });
+	//	dest->rows[1] = Vector4f({ 0.0f, vec.y, 0.0f, 0.0f });
+	//	dest->rows[2] = Vector4f({ 0.0f, 0.0f, vec.z, 0.0f });
+	//	dest->rows[3] = Vector4f({ 0.0f, 0.0f, 0.0f, 1.0f });
+
+	//	printf("[] x: {%f}, y: {%f}, z: {%f}", vec.vec[0], vec.vec[1], vec.vec[2]);
+	//	printf("x: {%f}, y: {%f}, z: {%f}", vec.x, vec.y, vec.z);
+	//}
+
+	//__device__ void MakeTranslation_gpu(FlatMatrix* dest, const Vector3f& vec)
+	//{
+	//	dest->rows[0] = Vector4f({ 1.0f, 0.0f, 0.0f, 0.0f });
+	//	dest->rows[1] = Vector4f({ 0.0f, 1.0f, 0.0f, 0.0f });
+	//	dest->rows[2] = Vector4f({ 0.0f, 0.0f, 1.0f, 0.0f });
+	//	dest->rows[3] = Vector4f({ vec.x, vec.y, vec.z, 1.0f });
+	//}
 
 	__global__ void MakeIdentity_gpu_glm(FlatMatrix* dest)
 	{
@@ -73,7 +181,7 @@ namespace CudaMath {
 		glm::mat4 baseCase = glm::mat4(1.0f);
 		FlatMatrix myMat;
 
-		MakeIdentity_gpu(&myMat);
+		MAKE_IDENTITY(myMat);
 		/*myMat.rows[0] = Vector4f({ 1.0f, 0.0f, 0.0f, 0.0f });
 		myMat.rows[1] = Vector4f({ 0.0f, 1.0f, 0.0f, 0.0f });
 		myMat.rows[2] = Vector4f({ 0.0f, 0.0f, 1.0f, 0.0f });
@@ -106,8 +214,8 @@ namespace CudaMath {
 		myMat.rows[1] = Vector4f({ 0.0f, 1.0f, 0.0f, 0.0f });
 		myMat.rows[2] = Vector4f({ 0.0f, 0.0f, 1.0f, 0.0f });
 		myMat.rows[3] = Vector4f({ 2.0f, 3.0f, 4.0f, 1.0f });*/
-
-		MakeTranslation_gpu(&myMat, { 7.0f,5.0f,9.0f });
+		Vector3f tvec{ 7.0f,5.0f,9.0f };
+		MAKE_TRANSLATION(myMat, tvec);
 
 		for (int i = 0; i < 4; i++)
 		{
@@ -133,7 +241,7 @@ namespace CudaMath {
 		vec.z = 3.0f;*/
 		printf("x: {%f}, y: {%f}, z: {%f}\n\n", vec.vec[0], vec.vec[1], vec.vec[2]);
 
-		MakeScale_gpu(&myMat, vec);
+		MAKE_SCALE(myMat, vec);
 
 	/*	myMat.rows[0] = Vector4f({ 2.0f, 0.0f, 0.0f, 0.0f });
 		myMat.rows[1] = Vector4f({ 0.0f, 3.0f, 0.0f, 0.0f });

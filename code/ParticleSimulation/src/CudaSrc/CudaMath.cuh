@@ -2,7 +2,9 @@
 #include "CUDA_KERNEL.h"
 #include "Math/Matrix.h"
 
-#define ZERO_FLAT_MATRIX(mat)  memset(mat, 0, 16 * sizeof(float));
+#define ZERO_FLAT_MATRIX(Mat)  memset(Mat.mat, 0, 16 * sizeof(float));
+
+
 
 namespace CudaMath {
 
@@ -31,11 +33,25 @@ namespace CudaMath {
 		Vector4f rows[4];	
 	}FlatMatrix;
 
+#define MAKE_IDENTITY(dest)dest.rows[0] = Vector4f({ 1.0f, 0.0f, 0.0f, 0.0f });\
+dest.rows[1] = Vector4f({ 0.0f, 1.0f, 0.0f, 0.0f });\
+dest.rows[2] = Vector4f({ 0.0f, 0.0f, 1.0f, 0.0f });\
+dest.rows[3] = Vector4f({ 0.0f, 0.0f, 0.0f, 1.0f });
 
-	//__global__ void MatMul_gpu(Math::FlatMatrix* A, Math::FlatMatrix* B, Math::FlatMatrix* C, int N);
-	void MatMul_cpu();
+#define MAKE_SCALE(dest, vec) dest.rows[0] = Vector4f({ vec.x, 0.0f, 0.0f, 0.0f });\
+dest.rows[1] = Vector4f({ 0.0f, vec.y, 0.0f, 0.0f });\
+dest.rows[2] = Vector4f({ 0.0f, 0.0f, vec.z, 0.0f });\
+dest.rows[3] = Vector4f({ 0.0f, 0.0f, 0.0f, 1.0f });
+
+#define MAKE_TRANSLATION(dest, vec) dest.rows[0] = Vector4f({ 1.0f, 0.0f, 0.0f, 0.0f });\
+dest.rows[1] = Vector4f({ 0.0f, 1.0f, 0.0f, 0.0f });\
+dest.rows[2] = Vector4f({ 0.0f, 0.0f, 1.0f, 0.0f });\
+dest.rows[3] = Vector4f({ vec.x, vec.y, vec.z, 1.0f });
+
+	__global__ void MatMul_gpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int N);
+	//__global__ void MatMul_gpu();
 	__global__ void MatMulTest_gpu();
-	__global__ void MatMulTest_cpu();
+	//__global__ void MatMulTest_gpu();
 
 	//__global__ void MatMulVec();
 
@@ -43,9 +59,9 @@ namespace CudaMath {
 	
 
 
-	__device__ void MakeIdentity_gpu(FlatMatrix* dest);
-	__device__  void MakeScale_gpu(FlatMatrix* dest, const Vector3f& vec);
-	__device__ void MakeTranslation_gpu(FlatMatrix* dest, const Vector3f& vec);
+	__global__ void MakeIdentity_gpu(FlatMatrix* dest);
+	__global__  void MakeScale_gpu(FlatMatrix* dest, const Vector3f& vec);
+	__global__ void MakeTranslation_gpu(FlatMatrix* dest, const Vector3f& vec);
 
 	__global__ void MakeIdentity_gpu_glm(FlatMatrix* dest);
 	__global__ void MakeTranslation_gpu_glm(FlatMatrix* dest, const glm::vec3& vec);
@@ -54,6 +70,9 @@ namespace CudaMath {
 	__global__ void TestIdentity_gpu();
 	__global__ void TestTranslation_gpu();
 	__global__ void TestScale_gpu();
+
+
+	void MatMulTest_cpu();
 
 	void MakeIdentity_cpu(FlatMatrix* dest);
 

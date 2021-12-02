@@ -76,6 +76,8 @@ namespace ParticleSimulation {
 		CudaMath::TestTranslation_cpu();
 		CudaMath::TestScale_cpu();
 
+		CudaMath::MatMulTest_cpu();
+
 	}
 
 	void InstancedBinnedCPU::HandleInput()
