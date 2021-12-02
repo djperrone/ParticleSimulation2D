@@ -12,12 +12,7 @@
 #include "BlockFunctions.cuh"
 #include "common/PVec.h"
 
-// https://stackoverflow.com/questions/6061565/setting-up-visual-studio-intellisense-for-cuda-kernel-calls
-#ifdef __INTELLISENSE__
-#define CUDA_KERNEL(...)
-#else
-#define CUDA_KERNEL(...) <<< __VA_ARGS__ >>>
-#endif
+#include "CUDA_KERNEL.h"
 
 namespace Physics {
 

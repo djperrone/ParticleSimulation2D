@@ -13,7 +13,7 @@
 #include "Novaura/Renderer/TextLoader.h"
 
 #include "Novaura/Renderer/VertexBuffer.h"
-
+#include "Math/Matrix.h"
 
 
 
@@ -33,6 +33,7 @@ namespace Novaura {
 
 		std::unique_ptr<Shader> TextRenderShader;
 
+
 		//std::vector<VertexData> InstancedCircleVertices;
 
 
@@ -46,6 +47,12 @@ namespace Novaura {
 		std::unique_ptr<VertexBuffer> InstancedMatrixVertexBuffer;
 
 		glm::mat4* ModelMatrices;
+
+		Math::FlatMatrix* FlatMatrices;
+		Math::FlatMatrix IdentityMatrix;
+		Math::FlatMatrix TranslationMatrix;
+		Math::FlatMatrix ScaleMatrix;
+
 	//	glm::vec3* VertexPositions;
 		unsigned int MaxCircles;
 		const unsigned int InstancedIndexCount = 6;
@@ -473,9 +480,25 @@ namespace Novaura {
 
 		s_RenderData.CircleCounter = 0;
 	}
+
+	void Renderer::InitFlatMatrices()
+	{		
+		s_RenderData.FlatMatrices = new Math::FlatMatrix[s_RenderData.MaxCircles];
+
+		glm::mat4 identity = glm::mat4(1.0f);
+		memcpy(s_RenderData.IdentityMatrix.mat, glm::value_ptr(identity), sizeof(float) * 16);
+
+		Math::MakeIdentity(&s_RenderData.IdentityMatrix);
+
+		
+
+
+
+	}
 	
 	void Renderer::ShutdownInstancedCircles()
 	{
 		delete[] s_RenderData.ModelMatrices;		
+		delete[] s_RenderData.FlatMatrices;
 	}
 }

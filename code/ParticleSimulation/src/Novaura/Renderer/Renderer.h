@@ -39,7 +39,7 @@ namespace Novaura {
 		static void InitInstancedCircles(unsigned int amount, float scale, const glm::vec4& color);	
 		static void UpdateInstancedCircleMatrices(unsigned int amount);
 		static void EndInstancedCircles();
-
+		static void InitFlatMatrices();
 		static void ShutdownInstancedCircles();
 
 	};

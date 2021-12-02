@@ -7,9 +7,10 @@
 #include "Novaura/Core/Application.h"
 
 #include "CudaSrc/Physics.cuh"
+#include <glm/gtc/type_ptr.hpp>
 
-
-
+#include "Math/Matrix.h"
+#include "CudaSrc/CudaMath.cuh"
 namespace ParticleSimulation {
 	
 
@@ -66,6 +67,15 @@ namespace ParticleSimulation {
 		m_StateInfo.PAUSE = true;
 		m_StateInfo.PLAY = false;
 		m_StateInfo.RESET = false;
+
+		//Math::TestIdentity();
+		//Math::TestTranslation();
+		//Math::TestScale();
+
+		CudaMath::TestIdentity_cpu();
+		CudaMath::TestTranslation_cpu();
+		CudaMath::TestScale_cpu();
+
 	}
 
 	void InstancedBinnedCPU::HandleInput()
@@ -132,6 +142,30 @@ namespace ParticleSimulation {
 				Physics::check_move(grid, &particles[i], old_x, old_y, m_BlocksPerSide);
 			}			
 		}
+
+
+		//glm::mat4 testMat = glm::mat4(1.0f);
+		//float* flatMat = static_cast<float*>(glm::value_ptr(testMat));
+
+		//float* matrices[16] = new float[common::ParticleData::num_particles * 16];
+
+
+		
+
+	/*	float flatArr[16];
+		memcpy(flatArr, flatMat, sizeof(float) * 16);
+
+		spdlog::info("--------------------------");
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				std::cout << flatArr[j + i * 4];
+			}
+			std::cout << '\n';
+		}
+		spdlog::info("--------------------------");*/
+
 	}
 
 	void InstancedBinnedCPU::Draw(float deltaTime)

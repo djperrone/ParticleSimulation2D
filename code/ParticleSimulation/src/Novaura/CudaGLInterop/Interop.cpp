@@ -1,6 +1,8 @@
 #include <sapch.h>
 #include "Interop.h"
 
+#include "Novaura/Novaura.h"
+
 void InitDevices()
 {
 	cudaError_t cuda_err;
