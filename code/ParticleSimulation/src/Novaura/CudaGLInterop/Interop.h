@@ -11,16 +11,29 @@
 #include <cuda_gl_interop.h>
 #include <cudagl.h>
 
+
+
 namespace CudaGLInterop {
 
-	void InitDevices();
+	//void InitDevices();
+    // cuda samlples
+  /*  int gpuDeviceInit(int devID);
+    const char* _ConvertSMVer2ArchName(int major, int minor);
+    int _ConvertSMVer2Cores(int major, int minor);
+    int gpuGetMaxGflopsDeviceId();
+    int findCudaDevice(int argc, const char** argv);
+    int findIntegratedGPU();
+    bool checkCudaCapabilities(int major_version, int minor_version);*/
+
+
+    //--------------------------------------------------------
 
 	void SetDefaultCudaDevice();
-	void RegisterCudaGLBuffer(cudaGraphicsResource* positionsVBO_CUDA, unsigned int positionsVBO);
+	void RegisterCudaGLBuffer(struct cudaGraphicsResource* positionsVBO_CUDA, GLuint* positionsVBO);
 
-	void MapCudaGLMatrixBuffer(cudaGraphicsResource* positionsVBO_CUDA, size_t* num_bytes, glm::mat4* matrices);
+	void MapCudaGLMatrixBuffer(struct cudaGraphicsResource* positionsVBO_CUDA, size_t* num_bytes, glm::mat4* matrices);
 
-	void UnMapCudaGLMatrixBuffer(cudaGraphicsResource* positionsVBO_CUDA);
+	void UnMapCudaGLMatrixBuffer(struct cudaGraphicsResource* positionsVBO_CUDA);
 
 }
 

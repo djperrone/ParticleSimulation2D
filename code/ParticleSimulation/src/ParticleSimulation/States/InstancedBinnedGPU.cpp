@@ -111,6 +111,8 @@ namespace ParticleSimulation {
 			__debugbreak;
 			exit(-1);
 		}
+		Novaura::Renderer::InitInteropInstancedCircles(common::ParticleData::num_particles, particleScale, glm::vec4(0.8f, 0.2f, 0.2f, 1.0f));
+		Novaura::Renderer::UpdateMatricesInterop(particles_gpu, common::ParticleData::num_particles);
 
 
 		m_StateInfo.PAUSE = true;

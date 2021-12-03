@@ -19,6 +19,16 @@
 #include "common/particle_t.h"
 #include "CudaSrc/Physics.cuh"
 
+#include "Novaura/CudaGLInterop/helper_cuda.h"
+
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+#include <cuda_gl_interop.h>
+#include <cudagl.h>
+
+
+
 namespace Novaura {
 
 	struct RenderData
@@ -48,7 +58,7 @@ namespace Novaura {
 
 		Math::FlatMatrix* FlatMatrices;
 		
-		struct cudaGraphicsResource* positionsVBO_CUDA;
+		cudaGraphicsResource_t positionsVBO_CUDA = 0;
 
 	
 		unsigned int MaxCircles;
@@ -56,7 +66,7 @@ namespace Novaura {
 		unsigned int CircleCounter = 0;
 
 
-		unsigned int instanceVBO;
+		GLuint instanceVBO;
 		//unsigned int instancePositionVBO;
 		unsigned int sphereVAO;
 
@@ -537,7 +547,10 @@ namespace Novaura {
 
 		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.instanceVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * amount, 0, GL_DYNAMIC_DRAW);
-		glBindVertexArray(s_RenderData.sphereVAO);
+		//CudaGLInterop::RegisterCudaGLBuffer(s_RenderData.positionsVBO_CUDA, &s_RenderData.instanceVBO);
+		cudaGraphicsGLRegisterBuffer(&s_RenderData.positionsVBO_CUDA, s_RenderData.instanceVBO, cudaGraphicsRegisterFlagsWriteDiscard);
+
+		//glBindVertexArray(s_RenderData.sphereVAO);
 
 		glEnableVertexAttribArray(2);
 		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
@@ -553,7 +566,10 @@ namespace Novaura {
 		glVertexAttribDivisor(4, 1);
 		glVertexAttribDivisor(5, 1);
 
-		//CudaGLInterop::RegisterCudaGLBuffer(s_RenderData.positionsVBO_CUDA, s_RenderData.instanceVBO);
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		//glBindBuffer(GL_VERTEX_ARRAY,0);
+		//CudaGLInterop::InitDevices();
 	}
 
 	void Renderer::EndInteropInstancedCircles()
@@ -568,6 +584,7 @@ namespace Novaura {
 		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.instanceVBO);
 		//glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * s_RenderData.MaxCircles, &s_RenderData.ModelMatrices[0], GL_DYNAMIC_DRAW);
 		glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, s_RenderData.MaxCircles);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		//glDisableClientState(GL_VERTEX_ARRAY);
 
 		//s_RenderData.CircleCounter = 0;
@@ -575,18 +592,21 @@ namespace Novaura {
 
 	void Renderer::UpdateMatricesInterop(common::particle_t* particles_gpu, int num_particles)
 	{
-		CudaGLInterop::RegisterCudaGLBuffer(s_RenderData.positionsVBO_CUDA, s_RenderData.instanceVBO);
+		//CudaGLInterop::RegisterCudaGLBuffer(s_RenderData.positionsVBO_CUDA, s_RenderData.instanceVBO);
 
 		size_t num_bytes;
 		glm::mat4* matrices = nullptr;
-		CudaGLInterop::MapCudaGLMatrixBuffer(s_RenderData.positionsVBO_CUDA, &num_bytes, matrices);
+		//CudaGLInterop::MapCudaGLMatrixBuffer(s_RenderData.positionsVBO_CUDA, &num_bytes, matrices);
 		//CudaGLInterop::MapCudaGLMatrixBuffer(s_RenderData.positionsVBO_CUDA,&num_bytes, s_RenderData.ModelMatrices);
+
+		cudaGraphicsMapResources(1, &s_RenderData.positionsVBO_CUDA, 0);
+		cudaGraphicsResourceGetMappedPointer((void**)&matrices, &num_bytes, s_RenderData.positionsVBO_CUDA);
 		if (num_bytes != s_RenderData.MaxCircles * sizeof(glm::mat4))
 			spdlog::info("bytes dont match updatematriucesinterop");
 
 		Physics::UpdateMatrices_cpu(matrices, particles_gpu, num_particles);
-		
-		CudaGLInterop::UnMapCudaGLMatrixBuffer(s_RenderData.positionsVBO_CUDA);
+		cudaGraphicsUnmapResources(1, &s_RenderData.positionsVBO_CUDA, 0);
+		//CudaGLInterop::UnMapCudaGLMatrixBuffer(s_RenderData.positionsVBO_CUDA);
 		//CudaGLInterop::Un(s_RenderData.positionsVBO_CUDA, s_RenderData.instanceVBO);
 
 
