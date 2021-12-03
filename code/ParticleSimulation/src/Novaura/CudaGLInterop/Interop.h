@@ -11,4 +11,16 @@
 #include <cuda_gl_interop.h>
 #include <cudagl.h>
 
-void InitDevices();
+namespace CudaGLInterop {
+
+	void InitDevices();
+
+	void SetDefaultCudaDevice();
+	void RegisterCudaGLBuffer(cudaGraphicsResource* positionsVBO_CUDA, unsigned int positionsVBO);
+
+	void MapCudaGLMatrixBuffer(cudaGraphicsResource* positionsVBO_CUDA, size_t* num_bytes, glm::mat4* matrices);
+
+	void UnMapCudaGLMatrixBuffer(cudaGraphicsResource* positionsVBO_CUDA);
+
+}
+

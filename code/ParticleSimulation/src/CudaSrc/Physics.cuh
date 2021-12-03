@@ -7,6 +7,8 @@
 #include "../common/particle_t.h"
 #include "common/PVec.h"
 #include "common/Block.h"
+#include <glm/glm.hpp>
+#include <glm/ext/matrix_transform.hpp>
 
 #define NUM_THREADS 256
 
@@ -21,6 +23,11 @@ namespace Physics {
 	__global__ void move_gpu(common::Block* grid, int blocks_per_side, double size);
 	__global__ void check_move_gpu(common::Block* grid, int blocks_per_side, double block_size);
 	__global__ void InitGrid_gpu(common::Block* grid, common::particle_t* particles, int blocks_per_side, double block_size, int n);
+	__global__ void UpdateMatrices_gpu(glm::mat4* matrices, common::particle_t* particles, size_t numParticles);
+
+	void UpdateMatrices_cpu(glm::mat4* matrices, common::particle_t* particles, size_t numParticles);
+
+
 	void InitGrid(common::Block* grid, common::particle_t* particles,int blocks_per_side, double block_size, int n);
 	
 	void compute_forces(int blks, int numThreads, common::Block* grid, int blocks_per_side);

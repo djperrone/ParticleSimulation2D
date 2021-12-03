@@ -72,11 +72,11 @@ namespace ParticleSimulation {
 		//Math::TestTranslation();
 		//Math::TestScale();
 
-		CudaMath::TestIdentity_cpu();
-		CudaMath::TestTranslation_cpu();
-		CudaMath::TestScale_cpu();
+		//CudaMath::TestIdentity_cpu();
+		//CudaMath::TestTranslation_cpu();
+		//CudaMath::TestScale_cpu();
 
-		CudaMath::MatMulTest_cpu();
+		//CudaMath::MatMulTest_cpu();
 
 	}
 

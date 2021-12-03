@@ -10,5 +10,6 @@ namespace common {
 		static float dt; //= 0.0005f;
 		static int num_particles;// = 5;
 		static double size;
+		static float scale;
 	};
 }

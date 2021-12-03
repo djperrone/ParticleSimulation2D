@@ -4,7 +4,7 @@
 #include "Novaura/Camera/Camera.h"
 #include "Novaura/Renderer/Shader.h"
 
-
+#include "common/particle_t.h"
 namespace Novaura {
 
 	class Renderer
@@ -41,6 +41,11 @@ namespace Novaura {
 		static void EndInstancedCircles();
 		static void InitFlatMatrices();
 		static void ShutdownInstancedCircles();
+
+
+		static void InitInteropInstancedCircles(unsigned int amount, float scale, const glm::vec4& color);
+		static void EndInteropInstancedCircles();
+		static void UpdateMatricesInterop(common::particle_t* particles_gpu, int num_particles);
 
 	};
 }

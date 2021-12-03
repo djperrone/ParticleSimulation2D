@@ -85,7 +85,7 @@ namespace Physics {
 
         //set acc to 0
         for (int k = 0; k < curr.pcount; k++) {
-            printf("tid:%i, x: %f, y: %f\n", tid, curr.particles[k]->x, curr.particles[k]->y);
+           // printf("tid:%i, x: %f, y: %f\n", tid, curr.particles[k]->x, curr.particles[k]->y);
            // printf("test");
             curr.particles[k]->ax = curr.particles[k]->ay = 0;
         }
@@ -202,11 +202,33 @@ namespace Physics {
         }
     }
 
+    __global__ void UpdateMatrices_gpu(glm::mat4* matrices, common::particle_t* particles, size_t numParticles)
+    {
+       // glm::mat4 model = glm::mat4(1.0f);
+       // model = glm::translate(model, position) * glm::scale(glm::mat4(1.0f), scale);
+       // s_RenderData.ModelMatrices[s_RenderData.CircleCounter++] = model;
+        for (int i = 0; i < numParticles; i++)
+        {
+            glm::mat4 model = glm::mat4(1.0f);
+            glm::vec3 position{ particles[i].x, particles[i].y,0.0f };
+           // model = glm::translate(model, position);// *glm::scale(glm::mat4(1.0f), gl1);
+            matrices[i] = glm::translate(model, position) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f, 0.2f,1.0f));
+        }
+    }
+
+    void UpdateMatrices_cpu(glm::mat4* matrices, common::particle_t* particles, size_t numParticles)
+    {
+        cudaDeviceSynchronize();
+        UpdateMatrices_gpu CUDA_KERNEL(1, 1)(matrices, particles, numParticles);
+        cudaDeviceSynchronize();
+    }
+
     void InitGrid(common::Block* grid, common::particle_t* particles, int blocks_per_side, double block_size, int n)
     {
         printf("init_grid\n");
-
+        cudaDeviceSynchronize();
         InitGrid_gpu CUDA_KERNEL(1, 1) (grid, particles, blocks_per_side, block_size, n);
+        cudaDeviceSynchronize();
     }
 
   
@@ -240,7 +262,7 @@ namespace Physics {
         //printf(__FUNCTION__);
         //printf(__FUNCTION__);
 
-        check_move_gpu CUDA_KERNEL(blks, numThreads) (grid, blocks_per_side, block_size);
+        check_move_gpu CUDA_KERNEL(blks, 1) (grid, blocks_per_side, block_size);
     }
 
     void InitParticles(common::particle_t* particles, common::particle_t* d_particles)
