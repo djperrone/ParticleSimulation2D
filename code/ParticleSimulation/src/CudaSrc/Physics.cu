@@ -54,18 +54,6 @@ namespace Physics {
     __global__ void compute_forces_gpu(common::Block* grid, int blocks_per_side)
     {
 
-        //int tid = threadIdx.x + blockIdx.x * blockDim.x;
-        //if (tid >= blocks_per_side * blocks_per_side) return;
-
-        //int i = tid / blocks_per_side;
-        //int j = tid % blocks_per_side;
-
-        //common::Block* curr = &grid[i * blocks_per_side + j];
-        ////set acc to 0
-        //for (int k = 0; k < curr->pcount; k++) {
-        //    curr->particles[k]->ax = curr->particles[k]->ay = 0;
-        //}
-       // printf(__FUNCTION__);
 
         // Get thread (particle) ID
         int tid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -77,29 +65,22 @@ namespace Physics {
         //if (i * blocks_per_side + j >= blocks_per_side * blocks_per_side) return;
 
         common::Block& curr = grid[i * blocks_per_side + j];
-       /* printf("blocks_per_side: %i\n", blocks_per_side );
-        printf("i: %i, j: %i\n", i, j);
-        printf("index: %i\n", i * blocks_per_side + j);
-        printf("tid: %i\n", tid);*/
-        //printf("pcount: %i\n",  curr.pcount);
+    
 
         //set acc to 0
         for (int k = 0; k < curr.pcount; k++) {
-           // printf("tid:%i, x: %f, y: %f\n", tid, curr.particles[k]->x, curr.particles[k]->y);
-           // printf("test");
+          
             curr.particles[k]->ax = curr.particles[k]->ay = 0;
         }
-       // printf("success!\n");
+     
         // check each of 8 neighbors exists, calling apply_across_blocks_gpu if so
         if (j != blocks_per_side - 1) { //right
             apply_across_blocks_gpu(curr, grid[i * blocks_per_side + j + 1]);
-           // printf("test1");
+        
 
         }
         if (j != blocks_per_side - 1 && i != blocks_per_side - 1) { //down+right
-            apply_across_blocks_gpu(curr, grid[(i + 1) * blocks_per_side + j + 1]);
-           // printf("test2");
-
+            apply_across_blocks_gpu(curr, grid[(i + 1) * blocks_per_side + j + 1]); 
         }
         if (j != blocks_per_side - 1 && i != 0) { //up+right
             apply_across_blocks_gpu(curr, grid[(i - 1) * blocks_per_side + j + 1]);
@@ -142,6 +123,8 @@ namespace Physics {
         //
         for (int k = 0; k < curr.pcount; k++) {
             common::particle_t* p = curr.particles[k];
+            p->old_x = p->x;
+            p->old_y = p->y;
             p->vx += p->ax * dt1;
             p->vy += p->ay *dt1;
             p->x += p->vx * dt1;
@@ -165,7 +148,7 @@ namespace Physics {
 
     __global__ void check_move_gpu(common::Block* grid, int blocks_per_side, double block_size)
     {
-        //printf(__FUNCTION__);
+       // printf(__FUNCTION__);
 
         int tid = threadIdx.x + blockIdx.x * blockDim.x;
         if (tid >= blocks_per_side * blocks_per_side) return;
@@ -181,10 +164,13 @@ namespace Physics {
 
             // if particle moved to a new block, remove from old and put in new
             if (old_block_x != new_block_x || old_block_y != new_block_y) {
+                printf("particle changed bins\n");
                 push_particle_gpu(grid[new_block_x * blocks_per_side + new_block_y], curr.particles[k], curr.ids[k]);
                 erase_particle_gpu(curr, k);
             }
         }
+
+
 
     }
 
@@ -216,6 +202,86 @@ namespace Physics {
         }
     }
 
+    void check_move_serial(common::Block* grid, common::particle_t* particles_gpu, size_t num_particles, size_t blocks_per_side, double block_size)
+    {
+       // for (int i = 0; i < num_particles; i++)
+        //{
+            check_move_serial_gpu CUDA_KERNEL(1,1) (grid, particles_gpu,num_particles, blocks_per_side, block_size);
+           // cudaDeviceSynchronize();
+
+        //}
+
+    }
+
+    __global__ void check_move_serial_gpu(common::Block* grid, common::particle_t* particles,  size_t num_particles, size_t blocks_per_side, double block_size)
+    {
+       
+        //for (int i = 0; i < num_particles; i++)
+        //{
+        //    int new_block_x = (int)particles[i].x / block_size;
+        //    int new_block_y = (int)particles[i].y / block_size;
+        //    int old_block_x = (int)particles[i].old_x / block_size;
+        //    int old_block_y = (int)particles[i].old_y / block_size;
+        //    common::Block& curr = grid[old_block_x * blocks_per_side + old_block_y];
+        //    if (old_block_x != new_block_x || old_block_y != new_block_y) 
+        //    {
+        //        printf("particle changed bins\n");
+        //        push_particle_gpu(grid[new_block_x * blocks_per_side + new_block_y],&particles[i], 0);
+        //       // erase_particle_gpu(curr, k);
+        //    }
+
+        //}
+
+        for (int i = 0; i < blocks_per_side * blocks_per_side; i++) {
+            grid[i].pcount = 0;
+        }
+
+        for (size_t i = 0; i < num_particles; i++) {
+            int block_x = (int)(particles[i].x / block_size);
+            int block_y = (int)(particles[i].y / block_size);
+            push_particle_gpu(grid[block_x * blocks_per_side + block_y], &particles[i], i);
+        }
+
+        /*for (int i = 0; i < blocks_per_side; i++)
+        {
+            for (int j = 0; j < blocks_per_side; j++)
+            {
+                if (num_particles > i * blocks_per_side + j)
+                {
+                    for (int k = 0; k < grid[i * blocks_per_side + j].pcount; k++)
+                    {                   
+                        int new_block_x = (int)(grid[i * blocks_per_side + j].particles[k]->x / block_size);
+                        int new_block_y = (int)(grid[i * blocks_per_side + j].particles[k]->y / block_size);
+                        int old_block_x = (int)(grid[i * blocks_per_side + j].particles[k]->old_x / block_size);
+                        int old_block_y = (int)(grid[i * blocks_per_side + j].particles[k]->old_y / block_size);
+                        if (old_block_x != new_block_x || old_block_y != new_block_y)
+                        {
+                            printf("particle changed bins\n");
+                            push_particle_gpu(grid[new_block_x * blocks_per_side + new_block_y], &particles[i], 0);
+                            erase_particle_gpu(grid[new_block_x * blocks_per_side + new_block_y], k);
+                        }
+                    }
+                }
+            }
+        }*/
+       // int new_block_x = (int)particle->x / block_size;
+       // int new_block_y = (int)particle->y / block_size;
+
+        // if particle moved to a new block, remove from old and put in new
+
+        //for (int k = 0; k < curr.pcount; k++) {
+        //    int new_block_x = (int)(curr.particles[k]->x / block_size);
+        //    int new_block_y = (int)(curr.particles[k]->y / block_size);
+
+        //    // if particle moved to a new block, remove from old and put in new
+        //    if (old_block_x != new_block_x || old_block_y != new_block_y) {
+        //        printf("particle changed bins\n");
+        //        push_particle_gpu(grid[new_block_x * blocks_per_side + new_block_y], curr.particles[k], curr.ids[k]);
+        //        erase_particle_gpu(curr, k);
+        //    }
+        //}
+    }
+
     void UpdateMatrices_cpu(glm::mat4* matrices, common::particle_t* particles, size_t numParticles)
     {
         cudaDeviceSynchronize();
@@ -237,9 +303,10 @@ namespace Physics {
     {
        // printf(__FUNCTION__);
       
+        cudaError_t cudaerr = cudaDeviceSynchronize();
 
         compute_forces_gpu CUDA_KERNEL(blks, NUM_THREADS) (grid, blocks_per_side);
-        cudaError_t cudaerr = cudaDeviceSynchronize();
+        cudaerr = cudaDeviceSynchronize();
 
         if (cudaerr != cudaSuccess)
         {
@@ -253,16 +320,22 @@ namespace Physics {
     void move(int blks, int numThreads, common::Block* grid, int blocks_per_side, double size)
     {
         //printf(__FUNCTION__);
+        cudaDeviceSynchronize();
 
         move_gpu CUDA_KERNEL(blks, numThreads)(grid, blocks_per_side, size);
+        cudaDeviceSynchronize();
+
     }
 
-    void check_move(int blks, int numThreads, common::Block* grid, int blocks_per_side, double block_size)
+    void check_move_wrapper(int blks, int numThreads, common::Block* grid, int blocks_per_side, double block_size)
     {
         //printf(__FUNCTION__);
         //printf(__FUNCTION__);
+        cudaDeviceSynchronize();
 
-        check_move_gpu CUDA_KERNEL(blks, 1) (grid, blocks_per_side, block_size);
+        check_move_gpu CUDA_KERNEL(1, 1) (grid, blocks_per_side, block_size);
+        cudaDeviceSynchronize();
+
     }
 
     void InitParticles(common::particle_t* particles, common::particle_t* d_particles)
@@ -276,9 +349,7 @@ namespace Physics {
         
        // deviceParticleData.Init();
 
-        cudaMalloc((void**)&d_particles, common::ParticleData::num_particles * sizeof(common::particle_t));
-
-       
+        cudaMalloc((void**)&d_particles, common::ParticleData::num_particles * sizeof(common::particle_t));       
 
     }
     void ShutDown()

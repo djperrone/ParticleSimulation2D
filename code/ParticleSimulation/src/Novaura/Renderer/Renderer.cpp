@@ -572,6 +572,19 @@ namespace Novaura {
 		//CudaGLInterop::InitDevices();
 	}
 
+	void Renderer::OnReset(unsigned int amount)
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.instanceVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * amount, 0, GL_DYNAMIC_DRAW);
+		//CudaGLInterop::RegisterCudaGLBuffer(s_RenderData.positionsVBO_CUDA, &s_RenderData.instanceVBO);
+		cudaGraphicsGLRegisterBuffer(&s_RenderData.positionsVBO_CUDA, s_RenderData.instanceVBO, cudaGraphicsRegisterFlagsWriteDiscard);
+	}
+
+	void Renderer::RegisterCudaGLDevice()
+	{
+		cudaGraphicsGLRegisterBuffer(&s_RenderData.positionsVBO_CUDA, s_RenderData.instanceVBO, cudaGraphicsRegisterFlagsWriteDiscard);
+	}
+
 	void Renderer::EndInteropInstancedCircles()
 	{
 		//glEnableClientState(GL_VERTEX_ARRAY);

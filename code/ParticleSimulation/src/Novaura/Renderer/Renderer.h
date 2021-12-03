@@ -42,7 +42,8 @@ namespace Novaura {
 		static void InitFlatMatrices();
 		static void ShutdownInstancedCircles();
 
-
+		static void RegisterCudaGLDevice();
+		static void OnReset(unsigned int amount);
 		static void InitInteropInstancedCircles(unsigned int amount, float scale, const glm::vec4& color);
 		static void EndInteropInstancedCircles();
 		static void UpdateMatricesInterop(common::particle_t* particles_gpu, int num_particles);

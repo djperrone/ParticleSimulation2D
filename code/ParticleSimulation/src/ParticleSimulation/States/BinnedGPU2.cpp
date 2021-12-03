@@ -178,7 +178,7 @@ namespace ParticleSimulation {
 			Physics::move(blks, NUM_THREADS, grid_gpu, blocks_per_side, common::ParticleData::size);
 			cudaDeviceSynchronize();
 
-			Physics::check_move(blks, NUM_THREADS, grid_gpu, blocks_per_side, block_size);
+			Physics::check_move_wrapper(blks, NUM_THREADS, grid_gpu, blocks_per_side, block_size);
 
 			cudaDeviceSynchronize();
 

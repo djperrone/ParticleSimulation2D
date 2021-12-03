@@ -11,6 +11,10 @@
 //#include <cuda_gl_interop.h>
 //#include <cudagl.h>
 
+// need to re-register cuda device only on resize
+// dont need to change vertex array on resize
+// break up ininit interop to a few functions to avoid unecesary allocations
+
 namespace ParticleSimulation {
 	
 
@@ -147,9 +151,10 @@ namespace ParticleSimulation {
 			Physics::move(blks, NUM_THREADS, grid_gpu, blocks_per_side, common::ParticleData::size);
 			cudaDeviceSynchronize();
 
-			Physics::check_move(blks, NUM_THREADS, grid_gpu, blocks_per_side, block_size);
+			//Physics::check_move_wrapper(blks, NUM_THREADS, grid_gpu, blocks_per_side, block_size);
+			//check_move_serial(common::Block * grid, common::particle_t * particles_gpu, size_t num_particles, size_t blocks_per_side, double block_size)
+			Physics::check_move_serial(grid_gpu, particles_gpu, common::ParticleData::num_particles, blocks_per_side, block_size);
 
-			cudaDeviceSynchronize();
 
 			/*cudaMemcpy(particles, particles_gpu, common::ParticleData::num_particles * sizeof(common::particle_t), cudaMemcpyDeviceToHost);
 
