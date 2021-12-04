@@ -3,70 +3,512 @@
 #define GLM_FORCE_CUDA
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <time.h>
 
-namespace CudaMath {
+#include "Novaura/CudaGLInterop/helper_cuda.h"
 
-	
-	__global__ void MatMul_gpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int N)
-	{
-		printf("matmul gpu\n");
-		int ROW = blockIdx.y * blockDim.y + threadIdx.y;
-		int COL = blockIdx.x * blockDim.x + threadIdx.x;
-		float tmpSum = 0;
+#define NUM_THREADS 128
+#define NUM_PARTICLES 587
 
-		if (ROW < N && COL < N) {
-			// each thread computes one element of the block sub-matrix
-			for (int i = 0; i < N; i++) {
-				tmpSum += A->mat[ROW * N + i] * B->mat[i * N + COL];
+
+namespace CudaMath {	
+
+	void CudaMath::MatMul44_cpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int N)
+	{		
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				for (int k = 0; k < 4; k++)
+				{
+					C->rows[i].vec[j] += A->rows[k].vec[j] * B->rows[i].vec[k];
+				}
 			}
 		}
-		C->mat[ROW * N + COL] = tmpSum;
-
 	}
-
-	__global__ void MatMulTest_gpu()
+	__global__ void MatMul44Batch_gpu(FlatMatrix* grid, FlatMatrix* B, FlatMatrix* C, int N)
 	{
+		int tid = blockDim.x * blockIdx.x + threadIdx.x;
+		
 
-		/*int N = 4;
+		if (tid >= NUM_PARTICLES * 16 || blockIdx.x >= NUM_PARTICLES) return;
 
-		FlatMatrix A, B, C;
+		int i = tid / 16;
+		int j = tid % 16;
 
-		ZERO_FLAT_MATRIX(C);
-
-		MakeTranslation_gpu(&A, Vector3f({ 2.0f,3.0f,4.0f }));
-		MakeScale_gpu(&A, Vector3f({ 0.5f,0.5,0.5f }));
-
-		dim3 threadsPerBlock(N, N);
-		dim3 blocksPerGrid(1, 1);
-		if (N * N > 16)
-		{
-			threadsPerBlock.x = 16;
-			threadsPerBlock.y = 16;
-			blocksPerGrid.x = ceil(double(N) / double(threadsPerBlock.x));
-			blocksPerGrid.y = ceil(double(N) / double(threadsPerBlock.y));
+		int row = j / 4;
+		int col = j % 4;		
+		
+		float tmpSum = 0;
+		for (int k = 0; k < 4; k++)
+		{				
+			tmpSum += grid[i].rows[k].vec[col] * B->rows[row].vec[k];
 		}
-
-		MatMul_gpu CUDA_KERNEL(blocksPerGrid, threadsPerBlock) (&A, &B, &C, N);*/
-		//cudaDeviceSynchronize();
-
-
-		//glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 3.0f, 4.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
-
-		//for (int i = 0; i < 4; i++)
-		//{
-		//	for (int j = 0; j < 4; j++)
-		//	{
-		//		if (C.mat[j + i * 4] != model[i][j])
-		//		{
-		//			//std::cout << myMat.mat[j + i * 4] >> '\n';
-		//			printf("error identity\n");
-		//		}
-		//	}
-
-		//}
+			
+		
+		C[i].mat[j] = tmpSum;		
 
 	}
 	
+	void MatMul44BatchTest_cpu()
+	{
+		for (int num_tests = 0; num_tests < 50; num_tests++)
+		{
+			srand((unsigned int)time(NULL));
+
+			FlatMatrix A[NUM_PARTICLES], B, C[NUM_PARTICLES];
+			FlatMatrix* A_d, * B_d, * C_d;
+
+
+			glm::mat4 ref_mats[NUM_PARTICLES];
+
+			float scale = (float)rand() / (float)(RAND_MAX / 55.0f);
+			MAKE_SCALE(B, scale);
+
+			glm::mat4 scale_ref = glm::scale(glm::mat4(1.0f), glm::vec3(scale));			
+
+			for (int i = 0; i < NUM_PARTICLES; i++)
+			{
+				float x = (float)rand() / (float)(RAND_MAX / 55.0f);
+				float y = (float)rand() / (float)(RAND_MAX / 55.0f);
+				float z = (float)rand() / (float)(RAND_MAX / 55.0f);
+
+				Vector3f transVec{ x, y, z };
+				MAKE_TRANSLATION(A[i], transVec);
+
+				ref_mats[i] = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
+			}
+			printf("test {%i}", __LINE__);
+
+
+			for (int i = 0; i < NUM_PARTICLES; i++)
+				ZERO_FLAT_MATRIX(C[i]);
+
+			for (int k = 0; k < NUM_PARTICLES; k++)
+				for (int i = 0; i < 4; i++)
+					for (int j = 0; j < 4; j++)
+					{
+						if (A[k].rows[i].vec[j] != ref_mats[k][i][j])
+						{
+							printf("initial matrices dont match\n");
+							return;
+						}
+					}
+			printf("success\n");
+			cudaError_t cudaerr = cudaDeviceSynchronize();
+			if (cudaerr != cudaSuccess)
+			{
+				printf("1 kernel launch failed with error \"%s\".\n",
+					cudaGetErrorString(cudaerr));
+				__debugbreak;
+			}
+
+			cudaMalloc((void**)&B_d, sizeof(FlatMatrix));
+			cudaMalloc((void**)&A_d, sizeof(FlatMatrix) * NUM_PARTICLES);
+			cudaMalloc((void**)&C_d, sizeof(FlatMatrix) * NUM_PARTICLES);
+
+			cudaerr = cudaDeviceSynchronize();
+			if (cudaerr != cudaSuccess)
+			{
+				printf("2 kernel launch failed with error \"%s\".\n",
+					cudaGetErrorString(cudaerr));
+				__debugbreak;
+			}
+
+			cudaMemcpy(B_d, &B, sizeof(FlatMatrix), cudaMemcpyHostToDevice);
+			cudaMemcpy(A_d, A, sizeof(FlatMatrix) * NUM_PARTICLES, cudaMemcpyHostToDevice);
+			cudaMemcpy(C_d, C, sizeof(FlatMatrix) * NUM_PARTICLES, cudaMemcpyHostToDevice);
+
+
+			int num_blocks = (NUM_PARTICLES * 16 + NUM_THREADS - 1) / NUM_THREADS;
+
+			MatMul44Batch_gpu CUDA_KERNEL(num_blocks, NUM_THREADS) (A_d, B_d, C_d, NUM_PARTICLES);
+			cudaerr = cudaDeviceSynchronize();
+			if (cudaerr != cudaSuccess)
+			{
+				printf("4 kernel launch failed with error \"%s\".\n",
+					cudaGetErrorString(cudaerr));
+				exit(-1);
+			}
+
+			cudaMemcpy(A, A_d, sizeof(FlatMatrix) * NUM_PARTICLES, cudaMemcpyDeviceToHost);
+			cudaMemcpy(C, C_d, sizeof(FlatMatrix) * NUM_PARTICLES, cudaMemcpyDeviceToHost);
+
+
+			for (int k = 0; k < NUM_PARTICLES; k++)
+				for (int i = 0; i < 4; i++)
+					for (int j = 0; j < 4; j++)
+					{
+						//printf("%f, ", A[k].rows[i].vec[j]);
+						if (A[k].rows[i].vec[j] != ref_mats[k][i][j])
+						{
+							printf("after matrices dont match\n");
+							exit(-1);
+						}
+					}
+			printf("success3\n");
+
+
+			glm::mat4 results[NUM_PARTICLES];
+			for (int i = 0; i < NUM_PARTICLES; i++)
+			{
+				results[i] = ref_mats[i] * scale_ref;
+			}
+
+			for (int k = 0; k < NUM_PARTICLES; k++)
+				for (int i = 0; i < 4; i++)
+					for (int j = 0; j < 4; j++)
+					{
+						//printf("%f, ", A[k].rows[i].vec[j]);
+						if (C[k].rows[i].vec[j] != results[k][i][j])
+						{
+							printf("after matrices dont match\n");
+							exit(-1);
+						}
+
+					}
+			printf("success!!!!!!\n");
+
+
+		}
+
+			//for (int i = 0; i < N; i++)
+			//{
+			//	for (int j = 0; j < 16; j++)
+			//	{
+			//		float x = (float)rand() / (float)(RAND_MAX / 55.0f);
+			//		A[i].mat[j] = x;
+			//	}
+			//}
+
+			//for (int i = 0; i < N; i++)
+			//{
+			//	for (int j = 0; j < 4; j++)
+			//	{
+			//		for (int k = 0; k < 4; k++)
+			//			ref_mats[i][j][k] = A[i].rows[j].vec[k];
+			//	}
+			//}
+	}
+
+
+
+	__global__ void MatMul44_gpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int N)
+	{
+		int test = threadIdx.x;
+		printf("\nasdasdan");
+
+		for (int i = 0; i < N; i++)
+		{
+			for (int j = 0; j < N; j++)
+			{
+				for (int k = 0; k < N; k++)
+				{
+					C->rows[i].vec[j] += A->rows[k].vec[j] * B->rows[i].vec[k];
+				}
+			}
+		}
+		printf("\n--fgdfgdfgd--\n");
+
+	}
+
+
+	void CudaMath::MatMul44Test_cpu2()
+	{
+		for (int i = 0; i < 50; i++)
+		{
+			srand((unsigned int)time(NULL));
+
+
+			FlatMatrix A, B, C;
+			ZERO_FLAT_MATRIX(C);
+			FlatMatrix transMat;
+			float x = (float)rand() / (float)(RAND_MAX / 55.0f);
+			float y = (float)rand() / (float)(RAND_MAX / 55.0f);
+			float z = (float)rand() / (float)(RAND_MAX / 55.0f);
+
+
+
+			float scale = (float)rand() / (float)(RAND_MAX / 55.0f);
+
+
+			MAKE_SCALE(B, scale);
+
+			glm::mat4 ref_scale = glm::scale(glm::mat4(1.0f), glm::vec3(scale, scale, scale));
+
+			Vector3f transVec{ x, y, z };
+			MAKE_TRANSLATION(A, transVec);
+
+
+			glm::mat4 ref_trans = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
+			//FlatMatrix grid[4];
+
+
+
+
+			/*MatMul44Batch_gpu CUDA_KERNEL(1, 1) (&A, &transMat, &C, 4);
+			cudaDeviceSynchronize();*/
+
+			MatMul44_cpu(&A, &B, &C, 4);
+			//cudaDeviceSynchronize();
+
+			glm::mat4 ref_result = glm::scale(ref_trans, glm::vec3(scale,scale,scale));
+			
+			for (int i = 0; i < 4; i++)
+			{
+				for (int j = 0; j < 4; j++)
+				{
+
+					printf("%f, ", C.rows[i].vec[j]);
+
+				}
+				printf("\n");
+			}
+
+			printf("\n----\n");
+			for (int i = 0; i < 4; i++)\
+			{
+				for (int j = 0; j < 4; j++)
+				{
+					printf("%f, ", ref_result[i][j]);
+
+				}
+				printf("\n");
+			}
+
+
+			for (int i = 0; i < 4; i++)
+				for (int j = 0; j < 4; j++)
+				{
+					if (C.rows[i].vec[j] != ref_result[i][j])
+					{
+						printf("after matrices dont match\n");
+						return;
+					}
+				}
+			printf("success\n");
+		}
+		
+	}
+
+	void MatMul44Test_cpu()
+	{
+		for (int i = 0; i < 50; i++)
+		{
+			srand((unsigned int)time(NULL));
+
+
+			FlatMatrix A, B, C;
+			ZERO_FLAT_MATRIX(C);
+			FlatMatrix transMat;
+			float x = (float)rand() / (float)(RAND_MAX / 55.0f);
+			float y = (float)rand() / (float)(RAND_MAX / 55.0f);
+			float z = (float)rand() / (float)(RAND_MAX / 55.0f);
+
+			float scale = (float)rand() / (float)(RAND_MAX / 55.0f);
+			MAKE_SCALE(B, scale);
+
+			Vector3f transVec{ x, y, z };
+			MAKE_TRANSLATION(A, transVec);
+
+			FlatMatrix* A_d, * B_d, * C_d;
+			//cudaMalloc((void**)&d_particles, common::ParticleData::num_particles * sizeof(common::particle_t));
+			cudaMalloc((void**)&A_d, sizeof(FlatMatrix));
+			cudaMalloc((void**)&B_d, sizeof(FlatMatrix));
+			cudaMalloc((void**)&C_d, sizeof(FlatMatrix));
+
+			cudaMemcpy(A_d, (void*)&A, sizeof(FlatMatrix), cudaMemcpyHostToDevice);
+			cudaMemcpy(B_d, (void*)&B, sizeof(FlatMatrix), cudaMemcpyHostToDevice);
+			cudaMemcpy(C_d, (void*)&C, sizeof(FlatMatrix), cudaMemcpyHostToDevice);
+
+			glm::mat4 ref_mats;
+			//FlatMatrix grid[4];
+
+
+			for (int j = 0; j < 16; j++)
+			{
+				float x = (float)rand() / (float)(RAND_MAX / 55.0f);
+				A.mat[j] = x;
+			}
+
+			for (int j = 0; j < 4; j++)
+			{
+				for (int k = 0; k < 4; k++)
+					ref_mats[j][k] = A.rows[j].vec[k];
+			}
+
+			for (int i = 0; i < 4; i++)
+				for (int j = 0; j < 4; j++)
+				{
+					if (A.rows[i].vec[j] != ref_mats[i][j])
+					{
+						printf("initial matrices dont match\n");
+						return;
+					}
+				}
+			printf("success\n");
+
+			for (int i = 0; i < 4; i++)
+			{
+				for (int j = 0; j < 4; j++)
+				{
+
+					printf("%f, ", A.rows[i].vec[j]);
+
+				}
+				printf("\n");
+			}
+
+			printf("\n----\n");
+			for (int i = 0; i < 4; i++)\
+			{
+				for (int j = 0; j < 4; j++)
+				{
+					printf("%f, ", ref_mats[i][j]);
+
+				}
+				printf("\n");
+			}
+			printf("\n----\n");
+			printf("\n----\n");
+
+			/*MatMul44Batch_gpu CUDA_KERNEL(1, 1) (&A, &transMat, &C, 4);
+			cudaDeviceSynchronize();*/
+			cudaError_t cudaerr = cudaDeviceSynchronize();
+			if (cudaerr != cudaSuccess)
+			{
+				printf("1 kernel launch failed with error \"%s\".\n",
+					cudaGetErrorString(cudaerr));
+				__debugbreak;
+			}
+			MatMul44_gpu CUDA_KERNEL(1, 1) (A_d, B_d, C_d, 4);
+			//cudaDeviceSynchronize();
+			cudaerr = cudaDeviceSynchronize();
+			if (cudaerr != cudaSuccess)
+			{
+				printf("2 kernel launch failed with error \"%s\".\n",
+					cudaGetErrorString(cudaerr));
+				__debugbreak;
+			}
+
+
+
+			cudaMemcpy((void*)&A, A_d, sizeof(FlatMatrix), cudaMemcpyDeviceToHost);
+			cudaMemcpy((void*)&B, B_d, sizeof(FlatMatrix), cudaMemcpyDeviceToHost);
+			cudaMemcpy((void*)&C, C_d, sizeof(FlatMatrix), cudaMemcpyDeviceToHost);
+
+
+
+
+			glm::mat4 ref_result = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z)) * glm::scale(glm::mat4(1.0f), glm::vec3(scale));
+
+			for (int i = 0; i < 4; i++)
+			{
+				for (int j = 0; j < 4; j++)
+				{
+
+					printf("%f, ", C.rows[i].vec[j]);
+
+				}
+				printf("\n");
+			}
+
+			printf("\n----\n");
+			for (int i = 0; i < 4; i++)\
+			{
+				for (int j = 0; j < 4; j++)
+				{
+					printf("%f, ", ref_result[i][j]);
+
+				}
+				printf("\n");
+			}
+
+
+			for (int i = 0; i < 4; i++)
+				for (int j = 0; j < 4; j++)
+				{
+					if (C.rows[i].vec[j] != ref_result[i][j])
+					{
+						printf("after matrices dont match\n");
+						return;
+					}
+				}
+			printf("success\n");
+
+		}
+		
+
+	}
+
+	
+
+
+
+
+
+
+	
+	//__global__ void MatMul_gpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int N)
+	//{
+	//	printf("matmul gpu\n");
+	//	int ROW = blockIdx.y * blockDim.y + threadIdx.y;
+	//	int COL = blockIdx.x * blockDim.x + threadIdx.x;
+	//	float tmpSum = 0;
+
+	//	if (ROW < N && COL < N) {
+	//		// each thread computes one element of the block sub-matrix
+	//		for (int i = 0; i < N; i++) {
+	//			tmpSum += A->mat[ROW * N + i] * B->mat[i * N + COL];
+	//		}
+	//	}
+	//	C->mat[ROW * N + COL] = tmpSum;
+
+	//}
+
+	//__global__ void MatMulTest_gpu()
+	//{
+
+	//	/*int N = 4;
+
+	//	FlatMatrix A, B, C;
+
+	//	ZERO_FLAT_MATRIX(C);
+
+	//	MakeTranslation_gpu(&A, Vector3f({ 2.0f,3.0f,4.0f }));
+	//	MakeScale_gpu(&A, Vector3f({ 0.5f,0.5,0.5f }));
+
+	//	dim3 threadsPerBlock(N, N);
+	//	dim3 blocksPerGrid(1, 1);
+	//	if (N * N > 16)
+	//	{
+	//		threadsPerBlock.x = 16;
+	//		threadsPerBlock.y = 16;
+	//		blocksPerGrid.x = ceil(double(N) / double(threadsPerBlock.x));
+	//		blocksPerGrid.y = ceil(double(N) / double(threadsPerBlock.y));
+	//	}
+
+	//	MatMul_gpu CUDA_KERNEL(blocksPerGrid, threadsPerBlock) (&A, &B, &C, N);*/
+	//	//cudaDeviceSynchronize();
+
+
+	//	//glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 3.0f, 4.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
+
+	//	//for (int i = 0; i < 4; i++)
+	//	//{
+	//	//	for (int j = 0; j < 4; j++)
+	//	//	{
+	//	//		if (C.mat[j + i * 4] != model[i][j])
+	//	//		{
+	//	//			//std::cout << myMat.mat[j + i * 4] >> '\n';
+	//	//			printf("error identity\n");
+	//	//		}
+	//	//	}
+
+	//	//}
+
+	//}
+	//
 	
 
 	void MatMulTest_cpu()
@@ -108,7 +550,7 @@ namespace CudaMath {
 			blocksPerGrid.y = ceil(double(N) / double(threadsPerBlock.y));
 		}
 
-		MatMul_gpu CUDA_KERNEL(blocksPerGrid, threadsPerBlock) (&A, &B, &C, N);
+		//MatMul_gpu CUDA_KERNEL(blocksPerGrid, threadsPerBlock) (&A, &B, &C, N);
 
 		cudaDeviceSynchronize();
 
@@ -241,7 +683,7 @@ namespace CudaMath {
 		vec.z = 3.0f;*/
 		printf("x: {%f}, y: {%f}, z: {%f}\n\n", vec.vec[0], vec.vec[1], vec.vec[2]);
 
-		MAKE_SCALE(myMat, vec);
+		//MAKE_SCALE(myMat, vec);
 
 	/*	myMat.rows[0] = Vector4f({ 2.0f, 0.0f, 0.0f, 0.0f });
 		myMat.rows[1] = Vector4f({ 0.0f, 3.0f, 0.0f, 0.0f });
@@ -260,6 +702,8 @@ namespace CudaMath {
 			}
 		}
 	}
+
+	
 
 	
 

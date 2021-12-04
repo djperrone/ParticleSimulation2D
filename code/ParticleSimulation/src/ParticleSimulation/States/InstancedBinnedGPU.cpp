@@ -7,6 +7,7 @@
 #include "Novaura/Core/Application.h"
 
 #include "CudaSrc/Physics.cuh"
+#include "CudaSrc/CudaMath.cuh"
 
 //#include <cuda_gl_interop.h>
 //#include <cudagl.h>
@@ -122,6 +123,10 @@ namespace ParticleSimulation {
 		m_StateInfo.PAUSE = true;
 		m_StateInfo.PLAY = false;
 		m_StateInfo.RESET = false;
+
+		//CudaMath::MatMul44Test_cpu();
+		CudaMath::MatMul44BatchTest_cpu();
+		exit(2);
 	}
 
 	void InstancedBinnedGPU::HandleInput()

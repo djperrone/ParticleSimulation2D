@@ -6,6 +6,7 @@
 
 
 
+
 namespace CudaMath {
 
 	typedef union 
@@ -38,9 +39,10 @@ dest.rows[1] = Vector4f({ 0.0f, 1.0f, 0.0f, 0.0f });\
 dest.rows[2] = Vector4f({ 0.0f, 0.0f, 1.0f, 0.0f });\
 dest.rows[3] = Vector4f({ 0.0f, 0.0f, 0.0f, 1.0f });
 
-#define MAKE_SCALE(dest, vec) dest.rows[0] = Vector4f({ vec.x, 0.0f, 0.0f, 0.0f });\
-dest.rows[1] = Vector4f({ 0.0f, vec.y, 0.0f, 0.0f });\
-dest.rows[2] = Vector4f({ 0.0f, 0.0f, vec.z, 0.0f });\
+#define MAKE_SCALE(dest, scale) \
+dest.rows[0] = Vector4f({ scale, 0.0f, 0.0f, 0.0f });\
+dest.rows[1] = Vector4f({ 0.0f, scale, 0.0f, 0.0f });\
+dest.rows[2] = Vector4f({ 0.0f, 0.0f, scale, 0.0f });\
 dest.rows[3] = Vector4f({ 0.0f, 0.0f, 0.0f, 1.0f });
 
 #define MAKE_TRANSLATION(dest, vec) dest.rows[0] = Vector4f({ 1.0f, 0.0f, 0.0f, 0.0f });\
@@ -48,9 +50,11 @@ dest.rows[1] = Vector4f({ 0.0f, 1.0f, 0.0f, 0.0f });\
 dest.rows[2] = Vector4f({ 0.0f, 0.0f, 1.0f, 0.0f });\
 dest.rows[3] = Vector4f({ vec.x, vec.y, vec.z, 1.0f });
 
-	__global__ void MatMul_gpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int N);
+
+	__global__ void MatMul44Batch_gpu(FlatMatrix* grid, FlatMatrix* B, FlatMatrix* C, int N);
 	//__global__ void MatMul_gpu();
-	__global__ void MatMulTest_gpu();
+	__global__ void MatMul44_gpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int N);
+	void MatMul44_cpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int N);
 	//__global__ void MatMulTest_gpu();
 
 	//__global__ void MatMulVec();
@@ -59,20 +63,15 @@ dest.rows[3] = Vector4f({ vec.x, vec.y, vec.z, 1.0f });
 	
 
 
-	__global__ void MakeIdentity_gpu(FlatMatrix* dest);
-	__global__  void MakeScale_gpu(FlatMatrix* dest, const Vector3f& vec);
-	__global__ void MakeTranslation_gpu(FlatMatrix* dest, const Vector3f& vec);
 
-	__global__ void MakeIdentity_gpu_glm(FlatMatrix* dest);
-	__global__ void MakeTranslation_gpu_glm(FlatMatrix* dest, const glm::vec3& vec);
-	__global__ void MakeScale_gpu_glm(FlatMatrix* dest, const glm::vec3& vec);
 
 	__global__ void TestIdentity_gpu();
 	__global__ void TestTranslation_gpu();
 	__global__ void TestScale_gpu();
 
 
-	void MatMulTest_cpu();
+	void MatMul44Test_cpu();
+	void MatMul44Test_cpu2();
 
 	void MakeIdentity_cpu(FlatMatrix* dest);
 
@@ -84,7 +83,10 @@ dest.rows[3] = Vector4f({ vec.x, vec.y, vec.z, 1.0f });
 	void TestScale_cpu();
 
 
+	void MatMul44BatchTest_cpu();
+	__global__ void MatMul44Test_gpu();
 
-	
+	void MulVecMat44(FlatMatrix* mat, Vector4f& vec, Vector4f* result);
+	void DotProduct(Vector4f& A, Vector4f& B, Vector4f* result);
 
 }

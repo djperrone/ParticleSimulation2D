@@ -215,23 +215,6 @@ namespace Physics {
 
     __global__ void check_move_serial_gpu(common::Block* grid, common::particle_t* particles,  size_t num_particles, size_t blocks_per_side, double block_size)
     {
-       
-        //for (int i = 0; i < num_particles; i++)
-        //{
-        //    int new_block_x = (int)particles[i].x / block_size;
-        //    int new_block_y = (int)particles[i].y / block_size;
-        //    int old_block_x = (int)particles[i].old_x / block_size;
-        //    int old_block_y = (int)particles[i].old_y / block_size;
-        //    common::Block& curr = grid[old_block_x * blocks_per_side + old_block_y];
-        //    if (old_block_x != new_block_x || old_block_y != new_block_y) 
-        //    {
-        //        printf("particle changed bins\n");
-        //        push_particle_gpu(grid[new_block_x * blocks_per_side + new_block_y],&particles[i], 0);
-        //       // erase_particle_gpu(curr, k);
-        //    }
-
-        //}
-
         for (int i = 0; i < blocks_per_side * blocks_per_side; i++) {
             grid[i].pcount = 0;
         }
@@ -241,45 +224,7 @@ namespace Physics {
             int block_y = (int)(particles[i].y / block_size);
             push_particle_gpu(grid[block_x * blocks_per_side + block_y], &particles[i], i);
         }
-
-        /*for (int i = 0; i < blocks_per_side; i++)
-        {
-            for (int j = 0; j < blocks_per_side; j++)
-            {
-                if (num_particles > i * blocks_per_side + j)
-                {
-                    for (int k = 0; k < grid[i * blocks_per_side + j].pcount; k++)
-                    {                   
-                        int new_block_x = (int)(grid[i * blocks_per_side + j].particles[k]->x / block_size);
-                        int new_block_y = (int)(grid[i * blocks_per_side + j].particles[k]->y / block_size);
-                        int old_block_x = (int)(grid[i * blocks_per_side + j].particles[k]->old_x / block_size);
-                        int old_block_y = (int)(grid[i * blocks_per_side + j].particles[k]->old_y / block_size);
-                        if (old_block_x != new_block_x || old_block_y != new_block_y)
-                        {
-                            printf("particle changed bins\n");
-                            push_particle_gpu(grid[new_block_x * blocks_per_side + new_block_y], &particles[i], 0);
-                            erase_particle_gpu(grid[new_block_x * blocks_per_side + new_block_y], k);
-                        }
-                    }
-                }
-            }
-        }*/
-       // int new_block_x = (int)particle->x / block_size;
-       // int new_block_y = (int)particle->y / block_size;
-
-        // if particle moved to a new block, remove from old and put in new
-
-        //for (int k = 0; k < curr.pcount; k++) {
-        //    int new_block_x = (int)(curr.particles[k]->x / block_size);
-        //    int new_block_y = (int)(curr.particles[k]->y / block_size);
-
-        //    // if particle moved to a new block, remove from old and put in new
-        //    if (old_block_x != new_block_x || old_block_y != new_block_y) {
-        //        printf("particle changed bins\n");
-        //        push_particle_gpu(grid[new_block_x * blocks_per_side + new_block_y], curr.particles[k], curr.ids[k]);
-        //        erase_particle_gpu(curr, k);
-        //    }
-        //}
+       
     }
 
     void UpdateMatrices_cpu(glm::mat4* matrices, common::particle_t* particles, size_t numParticles)
