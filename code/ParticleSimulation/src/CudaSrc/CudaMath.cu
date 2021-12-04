@@ -40,11 +40,15 @@ namespace CudaMath {
 		int col = j % 4;		
 		
 		float tmpSum = 0;
-		for (int k = 0; k < 4; k++)
+		/*for (int k = 0; k < 4; k++)
 		{				
 			tmpSum += grid[i].rows[k].vec[col] * B->rows[row].vec[k];
-		}
-			
+		}*/
+		tmpSum += grid[i].rows[0].vec[col] * B->rows[row].vec[0];
+		tmpSum += grid[i].rows[1].vec[col] * B->rows[row].vec[1];
+		tmpSum += grid[i].rows[2].vec[col] * B->rows[row].vec[2];
+		tmpSum += grid[i].rows[3].vec[col] * B->rows[row].vec[3];
+
 		
 		C[i].mat[j] = tmpSum;		
 
