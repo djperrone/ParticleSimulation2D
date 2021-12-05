@@ -3,6 +3,7 @@
 #include "Novaura/Primitives/Rectangle.h"
 #include "Novaura/Camera/Camera.h"
 #include "Novaura/Renderer/Shader.h"
+#include "CudaSrc/CudaMath.cuh"
 
 #include "common/particle_t.h"
 namespace Novaura {
@@ -33,20 +34,30 @@ namespace Novaura {
 		static void RenderText(std::string text, float x, float y, float scale, glm::vec3 color);
 
 		//static void DrawInstancedCircle();
-		static void DrawInstancedCircle(const Rectangle& rectangle, const glm::vec2& quantity = { 1.0f,1.0f });
-		static void DrawInstancedCircle(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& color, const glm::vec2& quantity = { 1.0f,1.0f });
+		static void DrawInstancedCircle_glm(const Rectangle& rectangle, const glm::vec2& quantity = { 1.0f,1.0f });
+		static void DrawInstancedCircle_glm(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& color, const glm::vec2& quantity = { 1.0f,1.0f });
 
-		static void InitInstancedCircles(unsigned int amount, float scale, const glm::vec4& color);	
-		static void UpdateInstancedCircleMatrices(unsigned int amount);
-		static void EndInstancedCircles();
+		static void InitInstancedCircles_glm(unsigned int amount, float scale, const glm::vec4& color);
+		static void UpdateInstancedCircleMatrices_glm(unsigned int amount);
+		static void EndInstancedCircles_glm();
 		static void InitFlatMatrices();
+		static void ShutdownInstancedCircles_glm();
 		static void ShutdownInstancedCircles();
 
 		static void RegisterCudaGLDevice();
 		static void OnReset(unsigned int amount);
-		static void InitInteropInstancedCircles(unsigned int amount, float scale, const glm::vec4& color);
+		static void InitInteropInstancedCircles_glm(unsigned int amount, float scale, const glm::vec4& color);	
+		static void UpdateMatricesInterop_glm(common::particle_t* particles_gpu, int num_particles);
+
+
+
+		static void InitInteropInstancedCircles(unsigned int amount, float scale, const CudaMath::Vector4f& color);
 		static void EndInteropInstancedCircles();
-		static void UpdateMatricesInterop(common::particle_t* particles_gpu, int num_particles);
+		static void UpdateMatricesInterop(common::particle_t* particles_gpu, float scale, int num_particles);
+
+
+
+		
 
 	};
 }

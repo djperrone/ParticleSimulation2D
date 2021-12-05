@@ -23,15 +23,17 @@ namespace Physics {
 	__global__ void move_gpu(common::Block* grid, int blocks_per_side, double size);
 	__global__ void check_move_gpu(common::Block* grid, int blocks_per_side, double block_size);
 	__global__ void InitGrid_gpu(common::Block* grid, common::particle_t* particles, int blocks_per_side, double block_size, int n);
-	__global__ void UpdateMatrices_gpu(glm::mat4* matrices, common::particle_t* particles, size_t numParticles);
+	__global__ void UpdateMatrices_gpu_glm(glm::mat4* matrices, common::particle_t* particles, size_t numParticles);
 
 	//__global__ void check_move_serial_gpu(common::Block* grid, size_t numParticles);
 	//void check_move_serial(common::Block* grid, size_t numParticles, double block_size);
 	void __global__ check_move_serial_gpu(common::Block* grid, common::particle_t* particles, size_t num_particles, size_t blocks_per_side, double block_size);
 	void check_move_serial(common::Block* grid, common::particle_t* particles_gpu, size_t num_particles, size_t blocks_per_side, double block_size);
 
+	
 
-	void UpdateMatrices_cpu(glm::mat4* matrices, common::particle_t* particles, size_t numParticles);
+
+	void UpdateMatrices_cpu_glm(glm::mat4* matrices, common::particle_t* particles, size_t numParticles);
 
 
 	void InitGrid(common::Block* grid, common::particle_t* particles,int blocks_per_side, double block_size, int n);

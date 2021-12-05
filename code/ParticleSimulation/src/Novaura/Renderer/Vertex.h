@@ -1,14 +1,15 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include "CudaSrc/CudaMath.cuh"
 
 namespace Novaura{
 	struct VertexData
 	{
-		VertexData(const::glm::vec3& position, const glm::vec4& color, const glm::vec2& texCoord, const glm::vec2& quantity, float slot)
+		VertexData(const glm::vec3& position, const glm::vec4& color, const glm::vec2& texCoord, const glm::vec2& quantity, float slot)
 			: Position(position), Color(color), TexCoord(texCoord), Quantity(quantity), TextureSlot(slot){}
-		VertexData(const::glm::vec3& position, const glm::vec4& color, const glm::vec2& texCoord, const glm::vec2& quantity) : Position(position), Color(color), TexCoord(texCoord), Quantity(quantity) {}
-		VertexData(const::glm::vec3& position, const glm::vec4& color, const glm::vec2& texCoord) : Position(position), Color(color), TexCoord(texCoord) {}
+		VertexData(const glm::vec3& position, const glm::vec4& color, const glm::vec2& texCoord, const glm::vec2& quantity) : Position(position), Color(color), TexCoord(texCoord), Quantity(quantity) {}
+		VertexData(const glm::vec3& position, const glm::vec4& color, const glm::vec2& texCoord) : Position(position), Color(color), TexCoord(texCoord) {}
 		glm::vec3 Position;
 		glm::vec4 Color;
 		glm::vec2 TexCoord;
@@ -16,13 +17,25 @@ namespace Novaura{
 		float TextureSlot = 0.0f;
 	};
 
-	struct InstancedVertexData
+	struct InstancedVertexData_glm
 	{
-		InstancedVertexData(const::glm::vec4& position, const glm::vec4& color)
+		InstancedVertexData_glm(const glm::vec4& position, const glm::vec4& color)
 			: Position(position), Color(color) {}
 
 		glm::vec4 Position;
 		glm::vec4 Color;		
 	};
+
+	//4th pos is scale
+	struct InstancedVertexData
+	{
+		InstancedVertexData(const CudaMath::Vector4f& position, const CudaMath::Vector4f& color) 
+			: Position(position), Color(color) {}
+
+		CudaMath::Vector4f Position;		
+		CudaMath::Vector4f Color;
+	};
+
+
 }
 

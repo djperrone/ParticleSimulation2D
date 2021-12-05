@@ -169,9 +169,6 @@ namespace Physics {
                 erase_particle_gpu(curr, k);
             }
         }
-
-
-
     }
 
     __global__ void InitGrid_gpu(common::Block* grid, common::particle_t* particles, int blocks_per_side, double block_size, int n)
@@ -188,7 +185,7 @@ namespace Physics {
         }
     }
 
-    __global__ void UpdateMatrices_gpu(glm::mat4* matrices, common::particle_t* particles, size_t numParticles)
+    __global__ void UpdateMatrices_gpu_glm(glm::mat4* matrices, common::particle_t* particles, size_t numParticles)
     {
        // glm::mat4 model = glm::mat4(1.0f);
        // model = glm::translate(model, position) * glm::scale(glm::mat4(1.0f), scale);
@@ -207,6 +204,8 @@ namespace Physics {
        // for (int i = 0; i < num_particles; i++)
         //{
             check_move_serial_gpu CUDA_KERNEL(1,1) (grid, particles_gpu,num_particles, blocks_per_side, block_size);
+            cudaDeviceSynchronize();
+
            // cudaDeviceSynchronize();
 
         //}
@@ -227,10 +226,10 @@ namespace Physics {
        
     }
 
-    void UpdateMatrices_cpu(glm::mat4* matrices, common::particle_t* particles, size_t numParticles)
+    void UpdateMatrices_cpu_glm(glm::mat4* matrices, common::particle_t* particles, size_t numParticles)
     {
         cudaDeviceSynchronize();
-        UpdateMatrices_gpu CUDA_KERNEL(1, 1)(matrices, particles, numParticles);
+        UpdateMatrices_gpu_glm CUDA_KERNEL(1, 1)(matrices, particles, numParticles);
         cudaDeviceSynchronize();
     }
 

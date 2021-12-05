@@ -54,9 +54,9 @@ namespace Novaura {
 
 		std::unique_ptr<VertexBuffer> InstancedMatrixVertexBuffer;
 
-		glm::mat4* ModelMatrices;
+		glm::mat4* ModelMatrices_glm;
 
-		Math::FlatMatrix* FlatMatrices;
+		CudaMath::FlatMatrix* ModelMatrices;
 		
 		cudaGraphicsResource_t positionsVBO_CUDA = 0;
 
@@ -143,7 +143,7 @@ namespace Novaura {
 
 	
 
-	void Renderer::UpdateInstancedCircleMatrices(unsigned int amount)
+	void Renderer::UpdateInstancedCircleMatrices_glm(unsigned int amount)
 	{
 		
 	}
@@ -405,7 +405,7 @@ namespace Novaura {
 
 	
 
-	void Renderer::InitInstancedCircles(unsigned int amount, float scale, const glm::vec4& color)
+	void Renderer::InitInstancedCircles_glm(unsigned int amount, float scale, const glm::vec4& color)
 	{
 		constexpr unsigned int numIndices = 6;
 
@@ -414,7 +414,7 @@ namespace Novaura {
 			2,3,0
 		};
 
-		std::vector<InstancedVertexData> vertices;
+		std::vector<InstancedVertexData_glm> vertices;
 		vertices.reserve(4);	
 	
 		vertices.emplace_back(glm::vec4(-0.5f, -0.5f, 0.0f, scale), color);
@@ -426,20 +426,20 @@ namespace Novaura {
 		s_RenderData.MaxCircles = amount;
 
 		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.vbo);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(InstancedVertexData), &vertices[0], GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(InstancedVertexData_glm), &vertices[0], GL_STATIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_RenderData.ebo);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndices * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertexData), (void*)0);
+		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertexData_glm), (void*)0);
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertexData), (void*)offsetof(InstancedVertexData, Color));
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertexData_glm), (void*)offsetof(InstancedVertexData_glm, Color));
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_RenderData.ebo);	
 
-		s_RenderData.ModelMatrices = new glm::mat4[s_RenderData.MaxCircles];
+		s_RenderData.ModelMatrices_glm = new glm::mat4[s_RenderData.MaxCircles];
 
 		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.instanceVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * amount, &s_RenderData.ModelMatrices[0], GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * amount, &s_RenderData.ModelMatrices_glm[0], GL_DYNAMIC_DRAW);
 		glBindVertexArray(s_RenderData.sphereVAO);		
 
 		glEnableVertexAttribArray(2);
@@ -459,16 +459,16 @@ namespace Novaura {
 		//CudaGLInterop::RegisterCudaGLBuffer(s_RenderData.positionsVBO_CUDA, s_RenderData.instanceVBO);
 	}	
 
-	void Renderer::DrawInstancedCircle(const Rectangle& rectangle, const glm::vec2& quantity)
+	void Renderer::DrawInstancedCircle_glm(const Rectangle& rectangle, const glm::vec2& quantity)
 	{
-		DrawInstancedCircle(rectangle.GetPosition(), rectangle.GetScale(), rectangle.GetColor(), quantity);
+		DrawInstancedCircle_glm(rectangle.GetPosition(), rectangle.GetScale(), rectangle.GetColor(), quantity);
 	}
 	
-	void Renderer::DrawInstancedCircle(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& color, const glm::vec2& quantity)
+	void Renderer::DrawInstancedCircle_glm(const glm::vec3& position, const glm::vec3& scale, const glm::vec4& color, const glm::vec2& quantity)
 	{
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, position) * glm::scale(glm::mat4(1.0f), scale);		
-		s_RenderData.ModelMatrices[s_RenderData.CircleCounter++] = model;
+		s_RenderData.ModelMatrices_glm[s_RenderData.CircleCounter++] = model;
 	}
 
 	void Renderer::BeginSceneInstanced(const Camera& camera)
@@ -477,14 +477,14 @@ namespace Novaura {
 		s_RenderData.InstancedCircleShader->SetUniformMat4f("u_ViewProjectionMatrix", camera.GetViewProjectionMatrix());
 	}
 
-	void Renderer::EndInstancedCircles()
+	void Renderer::EndInstancedCircles_glm()
 	{
 		glBindVertexArray(s_RenderData.sphereVAO);
 
 		//if (s_RenderData.CircleCounter != s_RenderData.MaxCircles) spdlog::info(__FUNCTION__,"not enough circles?...");		
 
 		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.instanceVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * s_RenderData.MaxCircles, &s_RenderData.ModelMatrices[0], GL_DYNAMIC_DRAW);		
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * s_RenderData.MaxCircles, &s_RenderData.ModelMatrices_glm[0], GL_DYNAMIC_DRAW);
 		glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, s_RenderData.CircleCounter);		
 
 		s_RenderData.CircleCounter = 0;
@@ -492,9 +492,9 @@ namespace Novaura {
 
 	void Renderer::InitFlatMatrices()
 	{		
-		s_RenderData.FlatMatrices = new Math::FlatMatrix[s_RenderData.MaxCircles];
+		/*s_RenderData.FlatMatrices = new Math::FlatMatrix[s_RenderData.MaxCircles];
 
-		glm::mat4 identity = glm::mat4(1.0f);
+		glm::mat4 identity = glm::mat4(1.0f);*/
 		//memcpy(s_RenderData.IdentityMatrix.mat, glm::value_ptr(identity), sizeof(float) * 16);
 
 		//Math::MakeIdentity(&s_RenderData.IdentityMatrix);
@@ -505,14 +505,19 @@ namespace Novaura {
 
 	}
 	
+	void Renderer::ShutdownInstancedCircles_glm()
+	{
+		delete[] s_RenderData.ModelMatrices_glm;
+		//delete[] s_RenderData.ModelMatrices;
+	}
 	void Renderer::ShutdownInstancedCircles()
 	{
-		delete[] s_RenderData.ModelMatrices;		
-		delete[] s_RenderData.FlatMatrices;
+		delete[] s_RenderData.ModelMatrices;
+	
 	}
 
 
-	void Renderer::InitInteropInstancedCircles(unsigned int amount, float scale, const glm::vec4& color)
+	void Renderer::InitInteropInstancedCircles_glm(unsigned int amount, float scale, const glm::vec4& color)
 	{
 		constexpr unsigned int numIndices = 6;
 
@@ -521,7 +526,7 @@ namespace Novaura {
 			2,3,0
 		};
 
-		std::vector<InstancedVertexData> vertices;
+		std::vector<InstancedVertexData_glm> vertices;
 		vertices.reserve(4);
 
 		vertices.emplace_back(glm::vec4(-0.5f, -0.5f, 0.0f, scale), color);
@@ -533,17 +538,17 @@ namespace Novaura {
 		s_RenderData.MaxCircles = amount;
 
 		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.vbo);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(InstancedVertexData), &vertices[0], GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(InstancedVertexData_glm), &vertices[0], GL_STATIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_RenderData.ebo);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndices * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertexData), (void*)0);
+		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertexData_glm), (void*)0);
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertexData), (void*)offsetof(InstancedVertexData, Color));
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertexData_glm), (void*)offsetof(InstancedVertexData_glm, Color));
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_RenderData.ebo);
 
-		s_RenderData.ModelMatrices = new glm::mat4[s_RenderData.MaxCircles];
+		s_RenderData.ModelMatrices_glm = new glm::mat4[s_RenderData.MaxCircles];
 
 		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.instanceVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * amount, 0, GL_DYNAMIC_DRAW);
@@ -603,30 +608,138 @@ namespace Novaura {
 		//s_RenderData.CircleCounter = 0;
 	}
 
-	void Renderer::UpdateMatricesInterop(common::particle_t* particles_gpu, int num_particles)
+	void Renderer::UpdateMatricesInterop_glm(common::particle_t* particles_gpu, int num_particles)
 	{
 		//CudaGLInterop::RegisterCudaGLBuffer(s_RenderData.positionsVBO_CUDA, s_RenderData.instanceVBO);
 
 		size_t num_bytes;
 		glm::mat4* matrices = nullptr;
-		//CudaGLInterop::MapCudaGLMatrixBuffer(s_RenderData.positionsVBO_CUDA, &num_bytes, matrices);
-		//CudaGLInterop::MapCudaGLMatrixBuffer(s_RenderData.positionsVBO_CUDA,&num_bytes, s_RenderData.ModelMatrices);
+		
 
 		cudaGraphicsMapResources(1, &s_RenderData.positionsVBO_CUDA, 0);
 		cudaGraphicsResourceGetMappedPointer((void**)&matrices, &num_bytes, s_RenderData.positionsVBO_CUDA);
 		if (num_bytes != s_RenderData.MaxCircles * sizeof(glm::mat4))
 			spdlog::info("bytes dont match updatematriucesinterop");
 
-		Physics::UpdateMatrices_cpu(matrices, particles_gpu, num_particles);
+		Physics::UpdateMatrices_cpu_glm(matrices, particles_gpu, num_particles);
 		cudaGraphicsUnmapResources(1, &s_RenderData.positionsVBO_CUDA, 0);
-		//CudaGLInterop::UnMapCudaGLMatrixBuffer(s_RenderData.positionsVBO_CUDA);
-		//CudaGLInterop::Un(s_RenderData.positionsVBO_CUDA, s_RenderData.instanceVBO);
+		
+	}
+	void Renderer::InitInteropInstancedCircles(unsigned int amount, float scale, const CudaMath::Vector4f& color)
+	{
+		constexpr unsigned int numIndices = 6;
+
+		unsigned int indices[numIndices] = {
+			0,1,2,
+			2,3,0
+		};
+
+		std::vector<InstancedVertexData> vertices;
+		vertices.reserve(4);
+
+		vertices.emplace_back(CudaMath::Vector4f{-0.5f, -0.5f, 0.0f, scale}, color);
+		vertices.emplace_back(CudaMath::Vector4f{ 0.5f, -0.5f, 0.0f, scale}, color);
+		vertices.emplace_back(CudaMath::Vector4f{ 0.5f,  0.5f, 0.0f, scale}, color);
+		vertices.emplace_back(CudaMath::Vector4f{-0.5f,  0.5f, 0.0f, scale}, color);
+
+		
+
+		glBindVertexArray(s_RenderData.sphereVAO);
+		s_RenderData.MaxCircles = amount;
+
+		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.vbo);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(InstancedVertexData), &vertices[0], GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_RenderData.ebo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndices * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertexData), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertexData), (void*)offsetof(InstancedVertexData, Color));
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_RenderData.ebo);
+
+		s_RenderData.ModelMatrices = new CudaMath::FlatMatrix[s_RenderData.MaxCircles];
+
+		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.instanceVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(CudaMath::FlatMatrix) * amount, 0, GL_DYNAMIC_DRAW);
+		//CudaGLInterop::RegisterCudaGLBuffer(s_RenderData.positionsVBO_CUDA, &s_RenderData.instanceVBO);
+		cudaGraphicsGLRegisterBuffer(&s_RenderData.positionsVBO_CUDA, s_RenderData.instanceVBO, cudaGraphicsRegisterFlagsWriteDiscard);
+
+		//glBindVertexArray(s_RenderData.sphereVAO);
+
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(CudaMath::FlatMatrix), (void*)0);
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(CudaMath::FlatMatrix), (void*)(sizeof(CudaMath::Vector4f)));
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(CudaMath::FlatMatrix), (void*)(2 * sizeof(CudaMath::Vector4f)));
+		glEnableVertexAttribArray(5);
+		glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(CudaMath::FlatMatrix), (void*)(3 * sizeof(CudaMath::Vector4f)));
+
+		glVertexAttribDivisor(2, 1);
+		glVertexAttribDivisor(3, 1);
+		glVertexAttribDivisor(4, 1);
+		glVertexAttribDivisor(5, 1);
+
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+	
+	void Renderer::UpdateMatricesInterop(common::particle_t* particles_gpu, float scale, int num_particles)
+	{
+		//spdlog::info(__FUNCTION__);
+
+		if (num_particles != s_RenderData.MaxCircles) spdlog::error(__FUNCTION__,' ', __LINE__);
+
+		size_t num_bytes;
+		CudaMath::FlatMatrix* resultMatrices = nullptr;
+		cudaGraphicsMapResources(1, &s_RenderData.positionsVBO_CUDA, 0);
+		cudaGraphicsResourceGetMappedPointer((void**)&resultMatrices, &num_bytes, s_RenderData.positionsVBO_CUDA);
+		if (num_bytes != s_RenderData.MaxCircles * sizeof(CudaMath::FlatMatrix))
+			spdlog::info("bytes dont match updatematriucesinterop");
+		
+		CudaMath::FlatMatrix* translationMatrices_d = nullptr;
+		//CudaMath::FlatMatrix* translationMatrices = new CudaMath::FlatMatrix[num_particles];
+		CudaMath::FlatMatrix scaleMatrix;
+		CudaMath::FlatMatrix* scaleMatrix_d = nullptr;
+		//spdlog::info(__FUNCTION__);
+		//spdlog::info(__LINE__);
 
 
-		//glEnableClientState(GL_VERTEX_ARRAY);
+		MAKE_SCALE(scaleMatrix, scale);
+		cudaMalloc((void**)&scaleMatrix_d, sizeof(CudaMath::FlatMatrix));
+		cudaMemcpy(scaleMatrix_d, &scaleMatrix, sizeof(CudaMath::FlatMatrix), cudaMemcpyHostToDevice);
+		//spdlog::info(__LINE__);
+
+		cudaMalloc((void**)&translationMatrices_d, sizeof(CudaMath::FlatMatrix) * num_particles);
+
+		
+		CudaMath::MakeTranslationMatrices_cpu(translationMatrices_d, particles_gpu, num_particles);
+		//spdlog::info(__LINE__);
+
+		CudaMath::MatMul44Batch_cpu(translationMatrices_d, scaleMatrix_d, resultMatrices, num_particles);
+
+		//spdlog::info(__LINE__);
 
 
-		//glDisableClientState(GL_VERTEX_ARRAY);
-		//glEnableClientState()
+
+		//cudaMalloc
+
+		//CudaGLInterop::MapCudaGLMatrixBuffer(s_RenderData.positionsVBO_CUDA, &num_bytes, matrices);
+		//CudaGLInterop::MapCudaGLMatrixBuffer(s_RenderData.positionsVBO_CUDA,&num_bytes, s_RenderData.ModelMatrices);
+
+		
+
+
+		cudaGraphicsUnmapResources(1, &s_RenderData.positionsVBO_CUDA, 0);
+		//spdlog::info(__LINE__);
+
+		cudaFree(scaleMatrix_d);
+		//spdlog::info(__LINE__);
+
+		cudaFree(translationMatrices_d);
+		//spdlog::info(__LINE__);
+
+		//delete[] translationMatrices;
 	}
 }

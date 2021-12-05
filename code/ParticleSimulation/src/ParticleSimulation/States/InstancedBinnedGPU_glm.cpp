@@ -1,5 +1,5 @@
 #include "sapch.h"
-#include "InstancedBinnedGPU.h"
+#include "InstancedBinnedGPU_glm.h"
 
 #include "Novaura/Novaura.h"
 #include "Novaura/Collision/Collision.h"
@@ -19,7 +19,7 @@
 namespace ParticleSimulation {
 	
 
-	InstancedBinnedGPU::InstancedBinnedGPU()
+	InstancedBinnedGPU_glm::InstancedBinnedGPU_glm()
 	{
 		m_Window = Novaura::InputHandler::GetCurrentWindow();
 		m_CameraController = Novaura::Application::GetCameraController();
@@ -27,7 +27,7 @@ namespace ParticleSimulation {
 		OnEnter();
 	}
 	
-	InstancedBinnedGPU::InstancedBinnedGPU(std::shared_ptr<Novaura::Window> window, std::shared_ptr<Novaura::CameraController> cameraController, std::shared_ptr<Novaura::StateMachine> stateMachine)
+	InstancedBinnedGPU_glm::InstancedBinnedGPU_glm(std::shared_ptr<Novaura::Window> window, std::shared_ptr<Novaura::CameraController> cameraController, std::shared_ptr<Novaura::StateMachine> stateMachine)
 		: m_StateInfo()
 	{
 		m_Window = window;
@@ -39,11 +39,11 @@ namespace ParticleSimulation {
 		OnEnter();
 	}
 
-	void InstancedBinnedGPU::OnEnter()
+	void InstancedBinnedGPU_glm::OnEnter()
 	{
 		cudaError_t cudaerr;
 
-		//cudaDeviceSynchronize();
+		cudaDeviceSynchronize();
 
 		int n = common::ParticleData::num_particles;
 		float cutoff = common::ParticleData::cutoff;		
@@ -116,12 +116,9 @@ namespace ParticleSimulation {
 			__debugbreak;
 			exit(-1);
 		}
-		Novaura::Renderer::InitInteropInstancedCircles(common::ParticleData::num_particles, particleScale, CudaMath::Vector4f{ 0.8f, 0.2f, 0.2f, 1.0f });
-		spdlog::info("sucess1");
-		
-		Novaura::Renderer::UpdateMatricesInterop(particles_gpu, particleScale, common::ParticleData::num_particles);
-		spdlog::info("sucess2");
-		//exit(1);
+		Novaura::Renderer::InitInteropInstancedCircles_glm(common::ParticleData::num_particles, particleScale, glm::vec4(0.8f, 0.2f, 0.2f, 1.0f));
+		Novaura::Renderer::UpdateMatricesInterop_glm(particles_gpu, common::ParticleData::num_particles);
+
 
 		m_StateInfo.PAUSE = true;
 		m_StateInfo.PLAY = false;
@@ -132,16 +129,16 @@ namespace ParticleSimulation {
 		exit(2);*/
 	}
 
-	void InstancedBinnedGPU::HandleInput()
+	void InstancedBinnedGPU_glm::HandleInput()
 	{
 	}
 
-	void InstancedBinnedGPU::Update(float deltaTime)
+	void InstancedBinnedGPU_glm::Update(float deltaTime)
 	{		
 		//spdlog::info(__FUNCTION__);
 		if (m_StateInfo.RESET)
 		{
-			//m_StateMachine->ReplaceCurrentState(std::make_unique<ParticleSimulation::InstancedBinnedGPU>());
+			//m_StateMachine->ReplaceCurrentState(std::make_unique<ParticleSimulation::InstancedBinnedGPU_glm>());
 			OnExit();
 			OnEnter();
 		}
@@ -170,7 +167,7 @@ namespace ParticleSimulation {
 		}
 	}
 
-	void InstancedBinnedGPU::Draw(float deltaTime)
+	void InstancedBinnedGPU_glm::Draw(float deltaTime)
 	{
 		//spdlog::info(__FUNCTION__);
 
@@ -189,7 +186,7 @@ namespace ParticleSimulation {
 			Novaura::Renderer::DrawInstancedCircle(glm::vec3(particles[i].x -1.5f, particles[i].y-0.75, 0), glm::vec3(particleScale, particleScale, 0), glm::vec4(0.8f, 0.2f, 0.2f, 1.0f), glm::vec2(1.0f, 1.0f));
 		}		*/
 
-		Novaura::Renderer::UpdateMatricesInterop(particles_gpu, particleScale, common::ParticleData::num_particles);
+		Novaura::Renderer::UpdateMatricesInterop_glm(particles_gpu, common::ParticleData::num_particles);
 	
 		Novaura::Renderer::EndInteropInstancedCircles();
 
@@ -200,7 +197,7 @@ namespace ParticleSimulation {
 
 	
 
-	void InstancedBinnedGPU::OnExit()
+	void InstancedBinnedGPU_glm::OnExit()
 	{
 		//glfwSetInputMode(Novaura::InputHandler::GetCurrentWindow()->Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		free(particles);
@@ -208,7 +205,7 @@ namespace ParticleSimulation {
 		cudaFree(grid_gpu);
 	}
 
-	void InstancedBinnedGPU::Pause()
+	void InstancedBinnedGPU_glm::Pause()
 	{
 		//glfwSetInputMode(Novaura::InputHandler::GetCurrentWindow()->Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
@@ -216,7 +213,7 @@ namespace ParticleSimulation {
 		
 	}
 
-	void InstancedBinnedGPU::Resume()
+	void InstancedBinnedGPU_glm::Resume()
 	{
 		//Novaura::InputHandler::SetCurrentController(m_InputController);
 		//glfwSetInputMode(Novaura::InputHandler::GetCurrentWindow()->Window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);

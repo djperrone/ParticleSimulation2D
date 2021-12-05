@@ -1,6 +1,8 @@
+#pragma once
 //#include "CudaMath.h"
 #include "CUDA_KERNEL.h"
 #include "Math/Matrix.h"
+#include "common/particle_t.h"
 
 #define ZERO_FLAT_MATRIX(Mat)  memset(Mat.mat, 0, 16 * sizeof(float));
 
@@ -40,28 +42,34 @@ dest.rows[2] = Vector4f({ 0.0f, 0.0f, 1.0f, 0.0f });\
 dest.rows[3] = Vector4f({ 0.0f, 0.0f, 0.0f, 1.0f });
 
 #define MAKE_SCALE(dest, scale) \
-dest.rows[0] = Vector4f({ scale, 0.0f, 0.0f, 0.0f });\
-dest.rows[1] = Vector4f({ 0.0f, scale, 0.0f, 0.0f });\
-dest.rows[2] = Vector4f({ 0.0f, 0.0f, scale, 0.0f });\
-dest.rows[3] = Vector4f({ 0.0f, 0.0f, 0.0f, 1.0f });
+dest.rows[0] = CudaMath::Vector4f({ scale, 0.0f, 0.0f, 0.0f });\
+dest.rows[1] = CudaMath::Vector4f({ 0.0f, scale, 0.0f, 0.0f });\
+dest.rows[2] = CudaMath::Vector4f({ 0.0f, 0.0f, scale, 0.0f });\
+dest.rows[3] = CudaMath::Vector4f({ 0.0f, 0.0f, 0.0f, 1.0f });
 
 #define MAKE_TRANSLATION(dest, vec) dest.rows[0] = Vector4f({ 1.0f, 0.0f, 0.0f, 0.0f });\
 dest.rows[1] = Vector4f({ 0.0f, 1.0f, 0.0f, 0.0f });\
 dest.rows[2] = Vector4f({ 0.0f, 0.0f, 1.0f, 0.0f });\
 dest.rows[3] = Vector4f({ vec.x, vec.y, vec.z, 1.0f });
 
+#define MAKE_TRANSLATION_xyz(dest, x,y,z) dest.rows[0] = Vector4f({ 1.0f, 0.0f, 0.0f, 0.0f });\
+dest.rows[1] = Vector4f({ 0.0f, 1.0f, 0.0f, 0.0f });\
+dest.rows[2] = Vector4f({ 0.0f, 0.0f, 1.0f, 0.0f });\
+dest.rows[3] = Vector4f({ x, y, z, 1.0f });
 
 	__global__ void MatMul44Batch_gpu(FlatMatrix* grid, FlatMatrix* B, FlatMatrix* C, int N);
-	//__global__ void MatMul_gpu();
-	__global__ void MatMul44_gpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int N);
+	void MatMul44Batch_cpu(FlatMatrix* grid, FlatMatrix* B, FlatMatrix* C, int numParticles);
+	
+	__global__ void MatMul44_gpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int numParticles);
+	__global__ void MatMul44_gpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int* numParticles);
 	void MatMul44_cpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int N);
-	//__global__ void MatMulTest_gpu();
-
-	//__global__ void MatMulVec();
+	
 
 
 	
-
+	void __global__ MakeTranslationMatrices_gpu(FlatMatrix* matrices, common::particle_t* particles, size_t numParticles);
+	void MakeTranslationMatrices_cpu(FlatMatrix* matrices, common::particle_t* particles, size_t numParticles);
+	void UpdateMatrices_cpu(FlatMatrix* matrices, common::particle_t* particles, size_t numParticles);
 
 
 
@@ -75,8 +83,6 @@ dest.rows[3] = Vector4f({ vec.x, vec.y, vec.z, 1.0f });
 
 	void MakeIdentity_cpu(FlatMatrix* dest);
 
-	void MakeTranslation_cpu(FlatMatrix* dest, const Vector3f& vec);
-	void MakeScale_cpu(FlatMatrix* dest, const Vector3f& vec);
 
 	void TestIdentity_cpu();
 	void TestTranslation_cpu();
@@ -84,9 +90,8 @@ dest.rows[3] = Vector4f({ vec.x, vec.y, vec.z, 1.0f });
 
 
 	void MatMul44BatchTest_cpu();
-	__global__ void MatMul44Test_gpu();
 
-	void MulVecMat44(FlatMatrix* mat, Vector4f& vec, Vector4f* result);
-	void DotProduct(Vector4f& A, Vector4f& B, Vector4f* result);
+
+	
 
 }

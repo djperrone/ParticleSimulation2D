@@ -41,7 +41,7 @@ namespace ParticleSimulation {
 
 	void InstancedBinnedCPU::OnEnter()
 	{
-		Novaura::Renderer::InitInstancedCircles(common::ParticleData::num_particles, particleScale, particleColor);
+		Novaura::Renderer::InitInstancedCircles_glm(common::ParticleData::num_particles, particleScale, particleColor);
 
 		particles = (common::particle_t*)malloc(common::ParticleData::num_particles * sizeof(common::particle_t));
 		common::set_size(common::ParticleData::num_particles);
@@ -184,11 +184,11 @@ namespace ParticleSimulation {
 		
 		for (int i = 0; i < common::ParticleData::num_particles; i++)
 		{
-			Novaura::Renderer::DrawInstancedCircle(glm::vec3(particles[i].x -1.5f, particles[i].y-0.75, 0), glm::vec3(particleScale, particleScale, 0), glm::vec4(0.8f, 0.2f, 0.2f, 1.0f), glm::vec2(1.0f, 1.0f));
+			Novaura::Renderer::DrawInstancedCircle_glm(glm::vec3(particles[i].x -1.5f, particles[i].y-0.75, 0), glm::vec3(particleScale, particleScale, 0), glm::vec4(0.8f, 0.2f, 0.2f, 1.0f), glm::vec2(1.0f, 1.0f));
 		}	
 
 		//Novaura::BatchRenderer::EndScene();
-		Novaura::Renderer::EndInstancedCircles();
+		Novaura::Renderer::EndInstancedCircles_glm();
 		m_Gui->DrawStateButtons(m_StateInfo, particleScale);
 		
 		m_Gui->EndFrame();
@@ -202,7 +202,7 @@ namespace ParticleSimulation {
 		spdlog::info(__FUNCTION__);
 		free(particles);
 		pvec::FreeGrid(grid, m_BlocksPerSide);
-		Novaura::Renderer::ShutdownInstancedCircles();
+		Novaura::Renderer::ShutdownInstancedCircles_glm();
 	}
 
 	void InstancedBinnedCPU::Pause()
