@@ -7,6 +7,7 @@
 
 #include "Novaura/CudaGLInterop/helper_cuda.h"
 
+
 #define NUM_THREADS 128
 #define NUM_PARTICLES 1000
 //#define NUM_BLOCKS (NUM_PARTICLES * 16 + NUM_THREADS - 1) / NUM_THREADS)
@@ -27,17 +28,11 @@ namespace CudaMath {
 		}
 	}
 	__global__ void MatMul44Batch_gpu(FlatMatrix* grid, FlatMatrix* B, FlatMatrix* C, int N)
-	{		
-		//const int num_blocks = ((NUM_PARTICLES * 16 + NUM_THREADS - 1) / NUM_THREADS) + 1;		
-		//const int localSize = NUM_PARTICLES / num_blocks + 1;
-
-		//__shared__ FlatMatrix localGrid[localSize];		
-
-		const int localSize = NUM_THREADS / 16;
-
-		__shared__ FlatMatrix localGrid[localSize];		
-
+	{	
 		int tid = blockDim.x * blockIdx.x + threadIdx.x;		
+		
+		const int localSize = NUM_THREADS / 16;
+		__shared__ FlatMatrix localGrid[localSize];		
 
 		__shared__ FlatMatrix localB;
 		memcpy(&localB, B, sizeof(FlatMatrix));
@@ -61,14 +56,13 @@ namespace CudaMath {
 		tmpSum += localGrid[local_i].rows[2].vec[col] * B->rows[row].vec[2];
 		tmpSum += localGrid[local_i].rows[3].vec[col] * B->rows[row].vec[3];
 
-
 	/*	tmpSum += grid[i].rows[0].vec[col] * localB.rows[row].vec[0];
 		tmpSum += grid[i].rows[1].vec[col] * localB.rows[row].vec[1];
 		tmpSum += grid[i].rows[2].vec[col] * localB.rows[row].vec[2];
 		tmpSum += grid[i].rows[3].vec[col] * localB.rows[row].vec[3];*/
 		
+		//__syncthreads();
 		C[i].mat[j] = tmpSum;		
-	//	__syncthreads();
 
 		/*for (int k = 0; k < 4; k++)
 		{
@@ -105,7 +99,6 @@ namespace CudaMath {
 				ref_mats[i] = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
 			}
 			printf("test {%i}", __LINE__);
-
 
 			for (int i = 0; i < NUM_PARTICLES; i++)
 				ZERO_FLAT_MATRIX(C[i]);
@@ -194,30 +187,8 @@ namespace CudaMath {
 
 					}
 			printf("success!!!!!!\n");
-
-
-		}
-
-			//for (int i = 0; i < N; i++)
-			//{
-			//	for (int j = 0; j < 16; j++)
-			//	{
-			//		float x = (float)rand() / (float)(RAND_MAX / 55.0f);
-			//		A[i].mat[j] = x;
-			//	}
-			//}
-
-			//for (int i = 0; i < N; i++)
-			//{
-			//	for (int j = 0; j < 4; j++)
-			//	{
-			//		for (int k = 0; k < 4; k++)
-			//			ref_mats[i][j][k] = A[i].rows[j].vec[k];
-			//	}
-			//}
+		}		
 	}
-
-
 
 	__global__ void MatMul44_gpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int N)
 	{
@@ -235,9 +206,7 @@ namespace CudaMath {
 			}
 		}
 		printf("\n--fgdfgdfgd--\n");
-
 	}
-
 
 	void CudaMath::MatMul44Test_cpu2()
 	{
