@@ -29,10 +29,7 @@ namespace Physics {
 	//void check_move_serial(common::Block* grid, size_t numParticles, double block_size);
 	void __global__ check_move_serial_gpu(common::Block* grid, common::particle_t* particles, size_t num_particles, size_t blocks_per_side, double block_size);
 	void check_move_serial(common::Block* grid, common::particle_t* particles_gpu, size_t num_particles, size_t blocks_per_side, double block_size);
-
 	
-
-
 	void UpdateMatrices_cpu_glm(glm::mat4* matrices, common::particle_t* particles, size_t numParticles);
 
 
@@ -42,22 +39,16 @@ namespace Physics {
 	void move(int blks, int numThreads, common::Block* grid, int blocks_per_side, double size);
 	void check_move_wrapper(int blks, int numThreads, common::Block* grid, int blocks_per_side, double block_size);
 
-
 	void apply_within_block(pvec::ParticleVec particles);
 	void apply_across_blocks(pvec::ParticleVec particles1, pvec::ParticleVec particles2);
 	void check_move(common::Block& grid, common::particle_t* particle, double old_x, double old_y, double block_size);
 	void check_move(pvec::ParticleVec** grid, common::particle_t* particle, double old_x, double old_y, double block_size);
 	//void check_move(pvec::ParticleVec** grid, common::particle_t* particle, double old_x, double old_y, double block_size);
-	void grid_particle_sim(common::particle_t* particles, int n, const double size, FILE* fsave);
-
-
-	//void apply_force_wrapper(common::particle_t& particle, common::particle_t& neighbor);
+	void grid_particle_sim(common::particle_t* particles, int n, const double size, FILE* fsave);	
 
 	void InitParticles(common::particle_t* particles, common::particle_t* d_particles);
 	void InitGrid();
 	void ShutDown();
-
-	
 
 }
 

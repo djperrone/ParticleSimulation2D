@@ -9,7 +9,6 @@
 #include "CudaSrc/Physics.cuh"
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Math/Matrix.h"
 #include "CudaSrc/CudaMath.cuh"
 namespace ParticleSimulation {
 	

@@ -13,7 +13,6 @@
 #include "Novaura/Renderer/TextLoader.h"
 
 #include "Novaura/Renderer/VertexBuffer.h"
-#include "Math/Matrix.h"
 
 #include "Novaura/CudaGLInterop/Interop.h"
 #include "common/particle_t.h"
@@ -43,16 +42,9 @@ namespace Novaura {
 		glm::vec4 DefaultRectangleVertices[4];
 		glm::vec2 DefaultTextureCoords[4];
 
-		std::unique_ptr<Shader> TextRenderShader;
+		std::unique_ptr<Shader> TextRenderShader;		
 
-		
-
-		std::unique_ptr<Shader> InstancedCircleShader;
-		std::unique_ptr<VertexArray> InstancedCircleVertexArray;
-		std::unique_ptr<IndexBuffer> InstancedCircleIndexBuffer;
-		std::unique_ptr<VertexBuffer> InstancedCircleVertexBuffer;
-
-		std::unique_ptr<VertexBuffer> InstancedMatrixVertexBuffer;
+		std::unique_ptr<Shader> InstancedCircleShader;	
 
 		glm::mat4* ModelMatrices_glm;
 
@@ -66,22 +58,15 @@ namespace Novaura {
 		const unsigned int InstancedIndexCount = 6;
 		unsigned int CircleCounter = 0;
 
-
-		GLuint instanceVBO;
-		//unsigned int instancePositionVBO;
+		GLuint instanceVBO;	
 		unsigned int sphereVAO;
-
 		unsigned int vbo, ebo;
-
-	};
-
-	
+	};	
 
 	static RenderData s_RenderData;
 
 	void Renderer::SetClearColor(float r, float g, float b, float a)
-	{
-		
+	{		
 		glClearColor(r, g, b, 1.0f);
 	}	
 
@@ -581,30 +566,17 @@ namespace Novaura {
 	}
 
 	void Renderer::EndInteropInstancedCircles()
-	{
-		//glEnableClientState(GL_VERTEX_ARRAY);
-
-
-		glBindVertexArray(s_RenderData.sphereVAO);
-
-		//if (s_RenderData.CircleCounter != s_RenderData.MaxCircles) spdlog::info(__FUNCTION__,"not enough circles?...");		
-
-		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.instanceVBO);
-		//glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * s_RenderData.MaxCircles, &s_RenderData.ModelMatrices[0], GL_DYNAMIC_DRAW);
+	{		
+		glBindVertexArray(s_RenderData.sphereVAO);	
+		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.instanceVBO);	
 		glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, s_RenderData.MaxCircles);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		//glDisableClientState(GL_VERTEX_ARRAY);
-
-		//s_RenderData.CircleCounter = 0;
+		glBindBuffer(GL_ARRAY_BUFFER, 0);		
 	}
 
 	void Renderer::UpdateMatricesInterop_glm(common::particle_t* particles_gpu, int num_particles)
 	{
-		//CudaGLInterop::RegisterCudaGLBuffer(s_RenderData.positionsVBO_CUDA, s_RenderData.instanceVBO);
-
 		size_t num_bytes;
-		glm::mat4* matrices = nullptr;
-		
+		glm::mat4* matrices = nullptr;		
 
 		cudaGraphicsMapResources(1, &s_RenderData.positionsVBO_CUDA, 0);
 		cudaGraphicsResourceGetMappedPointer((void**)&matrices, &num_bytes, s_RenderData.positionsVBO_CUDA);
@@ -630,9 +602,7 @@ namespace Novaura {
 		vertices.emplace_back(CudaMath::Vector4f{-0.5f, -0.5f, 0.0f, scale}, color);
 		vertices.emplace_back(CudaMath::Vector4f{ 0.5f, -0.5f, 0.0f, scale}, color);
 		vertices.emplace_back(CudaMath::Vector4f{ 0.5f,  0.5f, 0.0f, scale}, color);
-		vertices.emplace_back(CudaMath::Vector4f{-0.5f,  0.5f, 0.0f, scale}, color);
-
-		
+		vertices.emplace_back(CudaMath::Vector4f{-0.5f,  0.5f, 0.0f, scale}, color);		
 
 		glBindVertexArray(s_RenderData.sphereVAO);
 		s_RenderData.MaxCircles = amount;
@@ -646,16 +616,12 @@ namespace Novaura {
 		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertexData), (void*)0);
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertexData), (void*)offsetof(InstancedVertexData, Color));
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_RenderData.ebo);
-
-		//s_RenderData.ModelMatrices = new CudaMath::Matrix44f[s_RenderData.MaxCircles];
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_RenderData.ebo);		
 
 		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.instanceVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(CudaMath::Matrix44f) * amount, 0, GL_DYNAMIC_DRAW);
-		//CudaGLInterop::RegisterCudaGLBuffer(s_RenderData.positionsVBO_CUDA, &s_RenderData.instanceVBO);
-		cudaGraphicsGLRegisterBuffer(&s_RenderData.positionsVBO_CUDA, s_RenderData.instanceVBO, cudaGraphicsRegisterFlagsWriteDiscard);
-
-		//glBindVertexArray(s_RenderData.sphereVAO);
+	
+		cudaGraphicsGLRegisterBuffer(&s_RenderData.positionsVBO_CUDA, s_RenderData.instanceVBO, cudaGraphicsRegisterFlagsWriteDiscard);	
 
 		glEnableVertexAttribArray(2);
 		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(CudaMath::Matrix44f), (void*)0);
@@ -678,17 +644,12 @@ namespace Novaura {
 
 		MAKE_SCALE(scaleMatrix, scale);
 		cudaMalloc((void**)&s_RenderData.scaleMatrix_d, sizeof(CudaMath::Matrix44f));
-		cudaMemcpy(s_RenderData.scaleMatrix_d, &scaleMatrix, sizeof(CudaMath::Matrix44f), cudaMemcpyHostToDevice);		
-
+		cudaMemcpy(s_RenderData.scaleMatrix_d, &scaleMatrix, sizeof(CudaMath::Matrix44f), cudaMemcpyHostToDevice);	
 		cudaMalloc((void**)&s_RenderData.translationMatrices_d, sizeof(CudaMath::Matrix44f) * amount);
-
-
 	}
 	
 	void Renderer::UpdateMatricesInterop(common::particle_t* particles_gpu, float scale, int num_particles)
-	{
-		//spdlog::info(__FUNCTION__);
-
+	{	
 		if (num_particles != s_RenderData.MaxCircles) spdlog::error(__FUNCTION__,' ', __LINE__);
 
 		size_t num_bytes;
@@ -701,9 +662,6 @@ namespace Novaura {
 		CudaMath::MakeTranslationMatrices_cpu(s_RenderData.translationMatrices_d, particles_gpu, num_particles);
 
 		CudaMath::MatMul44Batch_cpu(s_RenderData.translationMatrices_d, s_RenderData.scaleMatrix_d, resultMatrices, num_particles);
-
-
-		cudaGraphicsUnmapResources(1, &s_RenderData.positionsVBO_CUDA, 0);	
-	
+		cudaGraphicsUnmapResources(1, &s_RenderData.positionsVBO_CUDA, 0);		
 	}
 }

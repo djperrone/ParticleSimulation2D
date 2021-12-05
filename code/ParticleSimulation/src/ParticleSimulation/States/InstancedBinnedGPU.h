@@ -35,7 +35,6 @@ namespace ParticleSimulation {
 
 		virtual void Pause() override;
 		virtual void Resume() override;
-
 	
 	private:		
 
@@ -57,10 +56,6 @@ namespace ParticleSimulation {
 
 		std::unique_ptr<Pgui::Gui> m_Gui;
 		StateInfo m_StateInfo;
-
-
-		
-
 
 	};
 }

@@ -9,13 +9,6 @@
 #include "CudaSrc/Physics.cuh"
 #include "CudaSrc/CudaMath.cuh"
 
-//#include <cuda_gl_interop.h>
-//#include <cudagl.h>
-
-// need to re-register cuda device only on resize
-// dont need to change vertex array on resize
-// break up ininit interop to a few functions to avoid unecesary allocations
-
 namespace ParticleSimulation {
 	
 
@@ -41,9 +34,7 @@ namespace ParticleSimulation {
 
 	void InstancedBinnedGPU::OnEnter()
 	{
-		cudaError_t cudaerr;
-
-		//cudaDeviceSynchronize();
+		cudaError_t cudaerr;		
 
 		int n = common::ParticleData::num_particles;
 		float cutoff = common::ParticleData::cutoff;		
@@ -67,8 +58,7 @@ namespace ParticleSimulation {
 
 		cudaDeviceSynchronize();
 		if (blocks_per_side != 0)
-		{
-			/*cudaMalloc((void**)&grid_gpu, blocks_per_side * blocks_per_side * sizeof(common::Block));*/
+		{			
 			if (cudaMalloc((void**)&grid_gpu, blocks_per_side * blocks_per_side * sizeof(common::Block)) != cudaSuccess)
 			{
 				spdlog::error("error cudamalloc\n");
@@ -79,7 +69,6 @@ namespace ParticleSimulation {
 			spdlog::error("bad cuda malloc size 0");
 			DebugBreak;
 		}		
-
 		
 		cudaMalloc((void**)&particles_gpu, n * sizeof(common::particle_t));
 		cudaMemcpy(particles_gpu, particles, n * sizeof(common::particle_t), cudaMemcpyHostToDevice);
@@ -91,9 +80,7 @@ namespace ParticleSimulation {
 			printf("5kernel launch failed with error \"%s\".\n",
 				cudaGetErrorString(cudaerr));
 			__debugbreak;
-		}
-
-		//cudaMemcpy(grid_gpu, grid, blocks_per_side * blocks_per_side * sizeof(common::Block), cudaMemcpyHostToDevice);
+		}	
 
 		cudaerr = cudaDeviceSynchronize();
 
@@ -107,7 +94,7 @@ namespace ParticleSimulation {
 		spdlog::info("init from binnedgpu");
 		
 		Physics::InitGrid(grid_gpu, particles_gpu, blocks_per_side, block_size, n);
-		//Physics::Test();
+		
 		cudaerr = cudaDeviceSynchronize();
 		if (cudaerr != cudaSuccess)
 		{
@@ -121,15 +108,11 @@ namespace ParticleSimulation {
 		
 		Novaura::Renderer::UpdateMatricesInterop(particles_gpu, particleScale, common::ParticleData::num_particles);
 		spdlog::info("sucess2");
-		//exit(1);
+	
 
 		m_StateInfo.PAUSE = true;
 		m_StateInfo.PLAY = false;
-		m_StateInfo.RESET = false;
-
-		//CudaMath::MatMul44Test_cpu();
-	/*	CudaMath::MatMul44BatchTest_cpu();
-		exit(2);*/
+		m_StateInfo.RESET = false;	
 	}
 
 	void InstancedBinnedGPU::HandleInput()
@@ -137,8 +120,7 @@ namespace ParticleSimulation {
 	}
 
 	void InstancedBinnedGPU::Update(float deltaTime)
-	{		
-		//spdlog::info(__FUNCTION__);
+	{				
 		if (m_StateInfo.RESET)
 		{
 			//m_StateMachine->ReplaceCurrentState(std::make_unique<ParticleSimulation::InstancedBinnedGPU>());
@@ -168,12 +150,6 @@ namespace ParticleSimulation {
 		float width = Novaura::InputHandler::GetCurrentWindow()->Width;
 		float height = Novaura::InputHandler::GetCurrentWindow()->Height;
 		float aspectRatio = Novaura::InputHandler::GetCurrentWindow()->AspectRatio;		
-	
-		//Novaura::Renderer::DrawInstancedCircle(glm::vec3(-0.65f, 0.1f, 0.0f), glm::vec3(common::ParticleData::size, common::ParticleData::size, 1.0), glm::vec4(0.2f, 0.2f, 0.8f, 1.0f));
-		/*for (int i = 0; i < common::ParticleData::num_particles; i++)
-		{
-			Novaura::Renderer::DrawInstancedCircle(glm::vec3(particles[i].x -1.5f, particles[i].y-0.75, 0), glm::vec3(particleScale, particleScale, 0), glm::vec4(0.8f, 0.2f, 0.2f, 1.0f), glm::vec2(1.0f, 1.0f));
-		}		*/
 
 		Novaura::Renderer::UpdateMatricesInterop(particles_gpu, particleScale, common::ParticleData::num_particles);
 	
@@ -206,8 +182,6 @@ namespace ParticleSimulation {
 	{
 		//Novaura::InputHandler::SetCurrentController(m_InputController);
 		//glfwSetInputMode(Novaura::InputHandler::GetCurrentWindow()->Window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-	}
-
-	
+	}	
 
 }
