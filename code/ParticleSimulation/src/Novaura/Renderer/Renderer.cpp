@@ -59,7 +59,8 @@ namespace Novaura {
 		CudaMath::FlatMatrix* ModelMatrices;
 		
 		cudaGraphicsResource_t positionsVBO_CUDA = 0;
-
+		CudaMath::FlatMatrix* translationMatrices_d = nullptr;
+		CudaMath::FlatMatrix* scaleMatrix_d = nullptr;
 	
 		unsigned int MaxCircles;
 		const unsigned int InstancedIndexCount = 6;
@@ -490,20 +491,7 @@ namespace Novaura {
 		s_RenderData.CircleCounter = 0;
 	}
 
-	void Renderer::InitFlatMatrices()
-	{		
-		/*s_RenderData.FlatMatrices = new Math::FlatMatrix[s_RenderData.MaxCircles];
-
-		glm::mat4 identity = glm::mat4(1.0f);*/
-		//memcpy(s_RenderData.IdentityMatrix.mat, glm::value_ptr(identity), sizeof(float) * 16);
-
-		//Math::MakeIdentity(&s_RenderData.IdentityMatrix);
-
-		
-
-
-
-	}
+	
 	
 	void Renderer::ShutdownInstancedCircles_glm()
 	{
@@ -512,7 +500,9 @@ namespace Novaura {
 	}
 	void Renderer::ShutdownInstancedCircles()
 	{
-		delete[] s_RenderData.ModelMatrices;
+		//delete[] s_RenderData.ModelMatrices;
+		cudaFree(s_RenderData.scaleMatrix_d);
+		cudaFree(s_RenderData.translationMatrices_d);
 	
 	}
 
@@ -625,7 +615,7 @@ namespace Novaura {
 		cudaGraphicsUnmapResources(1, &s_RenderData.positionsVBO_CUDA, 0);
 		
 	}
-	void Renderer::InitInteropInstancedCircles(unsigned int amount, float scale, const CudaMath::Vector4f& color)
+	void Renderer::InitInteropInstancedCircles(common::particle_t* particles_gpu, unsigned int amount, float scale, const CudaMath::Vector4f& color)
 	{
 		constexpr unsigned int numIndices = 6;
 
@@ -658,7 +648,7 @@ namespace Novaura {
 		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertexData), (void*)offsetof(InstancedVertexData, Color));
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_RenderData.ebo);
 
-		s_RenderData.ModelMatrices = new CudaMath::FlatMatrix[s_RenderData.MaxCircles];
+		//s_RenderData.ModelMatrices = new CudaMath::FlatMatrix[s_RenderData.MaxCircles];
 
 		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.instanceVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(CudaMath::FlatMatrix) * amount, 0, GL_DYNAMIC_DRAW);
@@ -682,7 +672,17 @@ namespace Novaura {
 		glVertexAttribDivisor(5, 1);
 
 		glBindVertexArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);		
+
+		CudaMath::FlatMatrix scaleMatrix;
+
+		MAKE_SCALE(scaleMatrix, scale);
+		cudaMalloc((void**)&s_RenderData.scaleMatrix_d, sizeof(CudaMath::FlatMatrix));
+		cudaMemcpy(s_RenderData.scaleMatrix_d, &scaleMatrix, sizeof(CudaMath::FlatMatrix), cudaMemcpyHostToDevice);		
+
+		cudaMalloc((void**)&s_RenderData.translationMatrices_d, sizeof(CudaMath::FlatMatrix) * amount);
+
+
 	}
 	
 	void Renderer::UpdateMatricesInterop(common::particle_t* particles_gpu, float scale, int num_particles)
@@ -698,48 +698,12 @@ namespace Novaura {
 		if (num_bytes != s_RenderData.MaxCircles * sizeof(CudaMath::FlatMatrix))
 			spdlog::info("bytes dont match updatematriucesinterop");
 		
-		CudaMath::FlatMatrix* translationMatrices_d = nullptr;
-		//CudaMath::FlatMatrix* translationMatrices = new CudaMath::FlatMatrix[num_particles];
-		CudaMath::FlatMatrix scaleMatrix;
-		CudaMath::FlatMatrix* scaleMatrix_d = nullptr;
-		//spdlog::info(__FUNCTION__);
-		//spdlog::info(__LINE__);
+		CudaMath::MakeTranslationMatrices_cpu(s_RenderData.translationMatrices_d, particles_gpu, num_particles);
+
+		CudaMath::MatMul44Batch_cpu(s_RenderData.translationMatrices_d, s_RenderData.scaleMatrix_d, resultMatrices, num_particles);
 
 
-		MAKE_SCALE(scaleMatrix, scale);
-		cudaMalloc((void**)&scaleMatrix_d, sizeof(CudaMath::FlatMatrix));
-		cudaMemcpy(scaleMatrix_d, &scaleMatrix, sizeof(CudaMath::FlatMatrix), cudaMemcpyHostToDevice);
-		//spdlog::info(__LINE__);
-
-		cudaMalloc((void**)&translationMatrices_d, sizeof(CudaMath::FlatMatrix) * num_particles);
-
-		
-		CudaMath::MakeTranslationMatrices_cpu(translationMatrices_d, particles_gpu, num_particles);
-		//spdlog::info(__LINE__);
-
-		CudaMath::MatMul44Batch_cpu(translationMatrices_d, scaleMatrix_d, resultMatrices, num_particles);
-
-		//spdlog::info(__LINE__);
-
-
-
-		//cudaMalloc
-
-		//CudaGLInterop::MapCudaGLMatrixBuffer(s_RenderData.positionsVBO_CUDA, &num_bytes, matrices);
-		//CudaGLInterop::MapCudaGLMatrixBuffer(s_RenderData.positionsVBO_CUDA,&num_bytes, s_RenderData.ModelMatrices);
-
-		
-
-
-		cudaGraphicsUnmapResources(1, &s_RenderData.positionsVBO_CUDA, 0);
-		//spdlog::info(__LINE__);
-
-		cudaFree(scaleMatrix_d);
-		//spdlog::info(__LINE__);
-
-		cudaFree(translationMatrices_d);
-		//spdlog::info(__LINE__);
-
-		//delete[] translationMatrices;
+		cudaGraphicsUnmapResources(1, &s_RenderData.positionsVBO_CUDA, 0);	
+	
 	}
 }

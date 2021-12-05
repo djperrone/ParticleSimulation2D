@@ -116,7 +116,7 @@ namespace ParticleSimulation {
 			__debugbreak;
 			exit(-1);
 		}
-		Novaura::Renderer::InitInteropInstancedCircles(common::ParticleData::num_particles, particleScale, CudaMath::Vector4f{ 0.8f, 0.2f, 0.2f, 1.0f });
+		Novaura::Renderer::InitInteropInstancedCircles(particles_gpu, common::ParticleData::num_particles, particleScale, CudaMath::Vector4f{ 0.8f, 0.2f, 0.2f, 1.0f });
 		spdlog::info("sucess1");
 		
 		Novaura::Renderer::UpdateMatricesInterop(particles_gpu, particleScale, common::ParticleData::num_particles);
@@ -148,25 +148,11 @@ namespace ParticleSimulation {
 		m_CameraController->Update(*Novaura::InputHandler::GetCurrentWindow(), deltaTime);
 		if (!m_StateInfo.PAUSE)
 		{
-
-
 			int blks = (blocks_per_side * blocks_per_side + NUM_THREADS - 1) / NUM_THREADS;
 			//Physics::compute_forces_gpu << < blks, NUM_THREADS >> > (d_particles, n);
 			Physics::compute_forces(blks, NUM_THREADS, grid_gpu, blocks_per_side);
-			cudaDeviceSynchronize();
-
-
-			Physics::move(blks, NUM_THREADS, grid_gpu, blocks_per_side, common::ParticleData::size);
-			cudaDeviceSynchronize();
-
-			//Physics::check_move_wrapper(blks, NUM_THREADS, grid_gpu, blocks_per_side, block_size);
-			//check_move_serial(common::Block * grid, common::particle_t * particles_gpu, size_t num_particles, size_t blocks_per_side, double block_size)
+			Physics::move(blks, NUM_THREADS, grid_gpu, blocks_per_side, common::ParticleData::size);					
 			Physics::check_move_serial(grid_gpu, particles_gpu, common::ParticleData::num_particles, blocks_per_side, block_size);
-
-
-			/*cudaMemcpy(particles, particles_gpu, common::ParticleData::num_particles * sizeof(common::particle_t), cudaMemcpyDeviceToHost);
-
-			cudaDeviceSynchronize();	*/
 		}
 	}
 

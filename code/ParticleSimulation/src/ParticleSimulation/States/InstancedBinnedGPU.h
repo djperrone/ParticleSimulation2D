@@ -41,7 +41,7 @@ namespace ParticleSimulation {
 
 		double m_CurrentTime = 0.0;
 		double m_PreviousTime = 0.0;
-		float particleScale = 0.05f;
+		float particleScale = 0.15f;
 
 		common::particle_t* particles;
 		common::particle_t* particles_gpu;		

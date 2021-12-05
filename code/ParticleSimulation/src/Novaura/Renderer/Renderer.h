@@ -39,8 +39,7 @@ namespace Novaura {
 
 		static void InitInstancedCircles_glm(unsigned int amount, float scale, const glm::vec4& color);
 		static void UpdateInstancedCircleMatrices_glm(unsigned int amount);
-		static void EndInstancedCircles_glm();
-		static void InitFlatMatrices();
+		static void EndInstancedCircles_glm();		
 		static void ShutdownInstancedCircles_glm();
 		static void ShutdownInstancedCircles();
 
@@ -51,7 +50,7 @@ namespace Novaura {
 
 
 
-		static void InitInteropInstancedCircles(unsigned int amount, float scale, const CudaMath::Vector4f& color);
+		static void InitInteropInstancedCircles(common::particle_t* particles_gpu, unsigned int amount, float scale, const CudaMath::Vector4f& color);
 		static void EndInteropInstancedCircles();
 		static void UpdateMatricesInterop(common::particle_t* particles_gpu, float scale, int num_particles);
 

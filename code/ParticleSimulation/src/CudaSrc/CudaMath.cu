@@ -8,7 +8,7 @@
 #include "Novaura/CudaGLInterop/helper_cuda.h"
 
 
-#define NUM_THREADS 128
+#define NUM_THREADS 256
 #define NUM_PARTICLES 1000
 //#define NUM_BLOCKS (NUM_PARTICLES * 16 + NUM_THREADS - 1) / NUM_THREADS)
 
@@ -35,24 +35,7 @@ namespace CudaMath {
 				cudaGetErrorString(cudaerr));
 			exit(-1);
 		}
-	}
-
-	/*void CudaMath::UpdateMatrices_cpu(FlatMatrix* matrices, common::particle_t* particles, size_t numParticles)
-	{
-		int num_blocks = (NUM_PARTICLES + NUM_THREADS - 1) / NUM_THREADS;
-
-		MakeTranslationMatrices_gpu CUDA_KERNEL(num_blocks, NUM_THREADS)(matrices, particles, NUM_PARTICLES);
-	}*/
-
-
-
-
-
-
-
-
-
-
+	}	
 
 	void CudaMath::MatMul44_cpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int N)
 	{		
@@ -71,15 +54,15 @@ namespace CudaMath {
 	{	
 		int tid = blockDim.x * blockIdx.x + threadIdx.x;		
 		
-		//const int localSize = NUM_THREADS / 16;
-		//__shared__ FlatMatrix localGrid[localSize];		
+		const int localSize = NUM_THREADS / 16;
+		__shared__ FlatMatrix localGrid[localSize];		
 
 		__shared__ FlatMatrix localB;
 		memcpy(&localB, B, sizeof(FlatMatrix));
 
 		if (tid >= NUM_PARTICLES * 16 || blockIdx.x >= NUM_PARTICLES) return;
 
-		//memcpy(localGrid, grid + blockIdx.x * localSize, sizeof(FlatMatrix) * localSize);
+		memcpy(localGrid, grid + blockIdx.x * localSize, sizeof(FlatMatrix) * localSize);
 
 		int i = tid / 16;
 		int j = tid % 16;
@@ -88,18 +71,18 @@ namespace CudaMath {
 		int col = j % 4;		
 		
 		float tmpSum = 0;
-		//int local_i = i % localSize;
+		int local_i = i % localSize;
 		//printf("blkidx: %i, i: %i, local_i: %i, local_size: %i\n",blockIdx.x,i ,local_i, localSize);
 
-	/*	tmpSum += localGrid[local_i].rows[0].vec[col] * B->rows[row].vec[0];
-		tmpSum += localGrid[local_i].rows[1].vec[col] * B->rows[row].vec[1];
-		tmpSum += localGrid[local_i].rows[2].vec[col] * B->rows[row].vec[2];
-		tmpSum += localGrid[local_i].rows[3].vec[col] * B->rows[row].vec[3];*/
+		tmpSum += localGrid[local_i].rows[0].vec[col] * localB.rows[row].vec[0];
+		tmpSum += localGrid[local_i].rows[1].vec[col] * localB.rows[row].vec[1];
+		tmpSum += localGrid[local_i].rows[2].vec[col] * localB.rows[row].vec[2];
+		tmpSum += localGrid[local_i].rows[3].vec[col] * localB.rows[row].vec[3];
 
-		tmpSum += grid[i].rows[0].vec[col] * localB.rows[row].vec[0];
+	/*	tmpSum += grid[i].rows[0].vec[col] * localB.rows[row].vec[0];
 		tmpSum += grid[i].rows[1].vec[col] * localB.rows[row].vec[1];
 		tmpSum += grid[i].rows[2].vec[col] * localB.rows[row].vec[2];
-		tmpSum += grid[i].rows[3].vec[col] * localB.rows[row].vec[3];
+		tmpSum += grid[i].rows[3].vec[col] * localB.rows[row].vec[3];*/
 		
 		//__syncthreads();
 		C[i].mat[j] = tmpSum;		
@@ -114,15 +97,15 @@ namespace CudaMath {
 	{
 		int tid = blockDim.x * blockIdx.x + threadIdx.x;
 
-		const int localSize = NUM_THREADS / 16;
+	/*	const int localSize = NUM_THREADS / 16;
 		__shared__ FlatMatrix localGrid[localSize];
 
 		__shared__ FlatMatrix localB;
-		memcpy(&localB, B, sizeof(FlatMatrix));
+		memcpy(&localB, B, sizeof(FlatMatrix));*/
 
 		if (tid >= *numParticles * 16 || blockIdx.x >= *numParticles) return;
 
-		memcpy(localGrid, inGrid + blockIdx.x * localSize, sizeof(FlatMatrix) * localSize);
+		//memcpy(localGrid, inGrid + blockIdx.x * localSize, sizeof(FlatMatrix) * localSize);
 
 		int i = tid / 16;
 		int j = tid % 16;
@@ -131,18 +114,18 @@ namespace CudaMath {
 		int col = j % 4;
 
 		float tmpSum = 0;
-		int local_i = i % localSize;
+		//int local_i = i % localSize;
 		//printf("blkidx: %i, i: %i, local_i: %i, local_size: %i\n",blockIdx.x,i ,local_i, localSize);
 
-		/*tmpSum += localGrid[local_i].rows[0].vec[col] * B->rows[row].vec[0];
-		tmpSum += localGrid[local_i].rows[1].vec[col] * B->rows[row].vec[1];
-		tmpSum += localGrid[local_i].rows[2].vec[col] * B->rows[row].vec[2];
-		tmpSum += localGrid[local_i].rows[3].vec[col] * B->rows[row].vec[3];*/
+		//tmpSum += localGrid[local_i].rows[0].vec[col] * localB.rows[row].vec[0];
+		//tmpSum += localGrid[local_i].rows[1].vec[col] * localB.rows[row].vec[1];
+		//tmpSum += localGrid[local_i].rows[2].vec[col] * localB.rows[row].vec[2];
+		//tmpSum += localGrid[local_i].rows[3].vec[col] * localB.rows[row].vec[3];
 
-			tmpSum += inGrid[i].rows[0].vec[col] * localB.rows[row].vec[0];
-			tmpSum += inGrid[i].rows[1].vec[col] * localB.rows[row].vec[1];
-			tmpSum += inGrid[i].rows[2].vec[col] * localB.rows[row].vec[2];
-			tmpSum += inGrid[i].rows[3].vec[col] * localB.rows[row].vec[3];
+			tmpSum += inGrid[i].rows[0].vec[col] * B->rows[row].vec[0];
+			tmpSum += inGrid[i].rows[1].vec[col] * B->rows[row].vec[1];
+			tmpSum += inGrid[i].rows[2].vec[col] * B->rows[row].vec[2];
+			tmpSum += inGrid[i].rows[3].vec[col] * B->rows[row].vec[3];
 
 			//__syncthreads();
 		outGrid[i].mat[j] = tmpSum;
