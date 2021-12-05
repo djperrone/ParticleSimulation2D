@@ -129,7 +129,7 @@ namespace CudaMath {
 		cudaMalloc((void**)&numParticles_d, sizeof(int));
 		cudaMemcpy(numParticles_d, &numParticles, sizeof(int), cudaMemcpyHostToDevice);
 
-		MatMul44Batch_gpu CUDA_KERNEL(num_blocks, NUM_THREADS) (inGrid, B,outGrid, numParticles_d);
+		MatMul44Batch_gpu CUDA_KERNEL(num_blocks, NUM_THREADS) (inGrid, B, outGrid, numParticles_d);
 		cudaError_t cudaerr = cudaDeviceSynchronize();
 		if (cudaerr != cudaSuccess)
 		{

@@ -104,11 +104,10 @@ namespace ParticleSimulation {
 			exit(-1);
 		}
 		Novaura::Renderer::InitInteropInstancedCircles(particles_gpu, common::ParticleData::num_particles, particleScale, CudaMath::Vector4f{ 0.8f, 0.2f, 0.2f, 1.0f });
-		spdlog::info("sucess1");
+		
 		
 		Novaura::Renderer::UpdateMatricesInterop(particles_gpu, particleScale, common::ParticleData::num_particles);
-		spdlog::info("sucess2");
-	
+		
 
 		m_StateInfo.PAUSE = true;
 		m_StateInfo.PLAY = false;
@@ -130,8 +129,7 @@ namespace ParticleSimulation {
 		m_CameraController->Update(*Novaura::InputHandler::GetCurrentWindow(), deltaTime);
 		if (!m_StateInfo.PAUSE)
 		{
-			int blks = (blocks_per_side * blocks_per_side + NUM_THREADS - 1) / NUM_THREADS;
-			//Physics::compute_forces_gpu << < blks, NUM_THREADS >> > (d_particles, n);
+			int blks = (blocks_per_side * blocks_per_side + NUM_THREADS - 1) / NUM_THREADS;			
 			Physics::compute_forces(blks, NUM_THREADS, grid_gpu, blocks_per_side);
 			Physics::move(blks, NUM_THREADS, grid_gpu, blocks_per_side, common::ParticleData::size);					
 			Physics::check_move_serial(grid_gpu, particles_gpu, common::ParticleData::num_particles, blocks_per_side, block_size);
@@ -158,13 +156,12 @@ namespace ParticleSimulation {
 		m_Gui->DrawStateButtons(m_StateInfo, particleScale);
 		
 		m_Gui->EndFrame();
-	}
-
-	
+	}	
 
 	void InstancedBinnedGPU::OnExit()
 	{
 		//glfwSetInputMode(Novaura::InputHandler::GetCurrentWindow()->Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		Novaura::Renderer::ShutdownInstancedCircles();
 		free(particles);
 		cudaFree(particles_gpu);
 		cudaFree(grid_gpu);

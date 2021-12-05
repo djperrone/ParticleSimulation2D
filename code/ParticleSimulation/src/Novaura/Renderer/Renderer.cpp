@@ -485,6 +485,7 @@ namespace Novaura {
 	}
 	void Renderer::ShutdownInstancedCircles()
 	{
+		spdlog::info(__FUNCTION__);
 		//delete[] s_RenderData.ModelMatrices;
 		cudaFree(s_RenderData.scaleMatrix_d);
 		cudaFree(s_RenderData.translationMatrices_d);
