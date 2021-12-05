@@ -1,5 +1,5 @@
 #include "sapch.h"
-#include "InstancedBinnedGPU.h"
+#include "InstancedBinnedGPU_final.h"
 
 #include "Novaura/Novaura.h"
 #include "Novaura/Collision/Collision.h"
@@ -12,7 +12,7 @@
 namespace ParticleSimulation {
 	
 
-	InstancedBinnedGPU::InstancedBinnedGPU()
+	InstancedBinnedGPU_final::InstancedBinnedGPU_final()
 	{
 		m_Window = Novaura::InputHandler::GetCurrentWindow();
 		m_CameraController = Novaura::Application::GetCameraController();
@@ -20,7 +20,7 @@ namespace ParticleSimulation {
 		OnEnter();
 	}
 	
-	InstancedBinnedGPU::InstancedBinnedGPU(std::shared_ptr<Novaura::Window> window, std::shared_ptr<Novaura::CameraController> cameraController, std::shared_ptr<Novaura::StateMachine> stateMachine)
+	InstancedBinnedGPU_final::InstancedBinnedGPU_final(std::shared_ptr<Novaura::Window> window, std::shared_ptr<Novaura::CameraController> cameraController, std::shared_ptr<Novaura::StateMachine> stateMachine)
 		: m_StateInfo()
 	{
 		m_Window = window;
@@ -32,7 +32,7 @@ namespace ParticleSimulation {
 		OnEnter();
 	}
 
-	void InstancedBinnedGPU::OnEnter()
+	void InstancedBinnedGPU_final::OnEnter()
 	{
 		cudaError_t cudaerr;		
 
@@ -112,15 +112,15 @@ namespace ParticleSimulation {
 		m_StateInfo.RESET = false;	
 	}
 
-	void InstancedBinnedGPU::HandleInput()
+	void InstancedBinnedGPU_final::HandleInput()
 	{
 	}
 
-	void InstancedBinnedGPU::Update(float deltaTime)
+	void InstancedBinnedGPU_final::Update(float deltaTime)
 	{				
 		if (m_StateInfo.RESET)
 		{
-			//m_StateMachine->ReplaceCurrentState(std::make_unique<ParticleSimulation::InstancedBinnedGPU>());
+			//m_StateMachine->ReplaceCurrentState(std::make_unique<ParticleSimulation::InstancedBinnedGPU_final>());
 			OnExit();
 			OnEnter();
 		}
@@ -134,7 +134,7 @@ namespace ParticleSimulation {
 		}
 	}
 
-	void InstancedBinnedGPU::Draw(float deltaTime)
+	void InstancedBinnedGPU_final::Draw(float deltaTime)
 	{
 		//spdlog::info(__FUNCTION__);
 
@@ -156,7 +156,7 @@ namespace ParticleSimulation {
 		m_Gui->EndFrame();
 	}	
 
-	void InstancedBinnedGPU::OnExit()
+	void InstancedBinnedGPU_final::OnExit()
 	{
 		//glfwSetInputMode(Novaura::InputHandler::GetCurrentWindow()->Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		Novaura::Renderer::ShutdownInstancedCircles();
@@ -165,7 +165,7 @@ namespace ParticleSimulation {
 		cudaFree(grid_gpu);
 	}
 
-	void InstancedBinnedGPU::Pause()
+	void InstancedBinnedGPU_final::Pause()
 	{
 		//glfwSetInputMode(Novaura::InputHandler::GetCurrentWindow()->Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
@@ -173,7 +173,7 @@ namespace ParticleSimulation {
 		
 	}
 
-	void InstancedBinnedGPU::Resume()
+	void InstancedBinnedGPU_final::Resume()
 	{
 		//Novaura::InputHandler::SetCurrentController(m_InputController);
 		//glfwSetInputMode(Novaura::InputHandler::GetCurrentWindow()->Window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
