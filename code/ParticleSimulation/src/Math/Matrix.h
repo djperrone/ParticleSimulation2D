@@ -22,7 +22,7 @@ namespace Math{
 		};
 	};
 
-	struct FlatMatrix
+	struct Matrix44f
 	{
 		union
 		{
@@ -30,20 +30,20 @@ namespace Math{
 			Vector4f rows[4];
 		};
 
-		FlatMatrix()
+		Matrix44f()
 		{
 			memset(mat, 0, 16 * sizeof(float));
 		}
 	};
 
-	void MakeIdentity_glm(FlatMatrix* dest);
+	void MakeIdentity_glm(Matrix44f* dest);
 
-	void MakeTranslation_glm(FlatMatrix* dest, const glm::vec3& vec);
-	void MakeScale_glm(FlatMatrix* dest, const glm::vec3& vec);
+	void MakeTranslation_glm(Matrix44f* dest, const glm::vec3& vec);
+	void MakeScale_glm(Matrix44f* dest, const glm::vec3& vec);
 
-	void MakeIdentity(FlatMatrix* dest);
-	void MakeTranslation(FlatMatrix* dest, const Vector3f& vec);
-	void MakeScale(FlatMatrix* dest, const Vector3f& vec);
+	void MakeIdentity(Matrix44f* dest);
+	void MakeTranslation(Matrix44f* dest, const Vector3f& vec);
+	void MakeScale(Matrix44f* dest, const Vector3f& vec);
 
 
 	void TestIdentity();

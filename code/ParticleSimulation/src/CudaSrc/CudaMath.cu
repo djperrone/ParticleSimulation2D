@@ -15,7 +15,7 @@
 namespace CudaMath {	
 
 
-	void __global__ CudaMath::MakeTranslationMatrices_gpu(FlatMatrix* matrices, common::particle_t* particles, size_t numParticles)
+	void __global__ CudaMath::MakeTranslationMatrices_gpu(Matrix44f* matrices, common::particle_t* particles, size_t numParticles)
 	{
 		int tid = blockDim.x * blockIdx.x + threadIdx.x;
 		if (tid >= numParticles) return;
@@ -23,7 +23,7 @@ namespace CudaMath {
 		MAKE_TRANSLATION_xyz(matrices[tid], (float)particles[tid].x, (float)particles[tid].y, 0.0f);
 	}
 
-	void CudaMath::MakeTranslationMatrices_cpu(FlatMatrix* matrices, common::particle_t* particles, size_t numParticles)
+	void CudaMath::MakeTranslationMatrices_cpu(Matrix44f* matrices, common::particle_t* particles, size_t numParticles)
 	{
 		int num_blocks = (numParticles + NUM_THREADS - 1) / NUM_THREADS;
 
@@ -37,7 +37,7 @@ namespace CudaMath {
 		}
 	}	
 
-	void CudaMath::MatMul44_cpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int N)
+	void CudaMath::MatMul44_cpu(Matrix44f* A, Matrix44f* B, Matrix44f* C, int N)
 	{		
 		for (int i = 0; i < 4; i++)
 		{
@@ -50,19 +50,19 @@ namespace CudaMath {
 			}
 		}
 	}
-	__global__ void MatMul44Batch_gpu(FlatMatrix* grid, FlatMatrix* B, FlatMatrix* C, int numParticles)
+	__global__ void MatMul44Batch_gpu(Matrix44f* grid, Matrix44f* B, Matrix44f* C, int numParticles)
 	{	
 		int tid = blockDim.x * blockIdx.x + threadIdx.x;		
 		
 		const int localSize = NUM_THREADS / 16;
-		__shared__ FlatMatrix localGrid[localSize];		
+		__shared__ Matrix44f localGrid[localSize];		
 
-		__shared__ FlatMatrix localB;
-		memcpy(&localB, B, sizeof(FlatMatrix));
+		__shared__ Matrix44f localB;
+		memcpy(&localB, B, sizeof(Matrix44f));
 
 		if (tid >= NUM_PARTICLES * 16 || blockIdx.x >= NUM_PARTICLES) return;
 
-		memcpy(localGrid, grid + blockIdx.x * localSize, sizeof(FlatMatrix) * localSize);
+		memcpy(localGrid, grid + blockIdx.x * localSize, sizeof(Matrix44f) * localSize);
 
 		int i = tid / 16;
 		int j = tid % 16;
@@ -93,19 +93,19 @@ namespace CudaMath {
 		}*/
 	}
 
-	__global__ void MatMul44Batch_gpu(FlatMatrix* inGrid, FlatMatrix* B, FlatMatrix* outGrid, int* numParticles)
+	__global__ void MatMul44Batch_gpu(Matrix44f* inGrid, Matrix44f* B, Matrix44f* outGrid, int* numParticles)
 	{
 		int tid = blockDim.x * blockIdx.x + threadIdx.x;
 
 	/*	const int localSize = NUM_THREADS / 16;
-		__shared__ FlatMatrix localGrid[localSize];
+		__shared__ Matrix44f localGrid[localSize];
 
-		__shared__ FlatMatrix localB;
-		memcpy(&localB, B, sizeof(FlatMatrix));*/
+		__shared__ Matrix44f localB;
+		memcpy(&localB, B, sizeof(Matrix44f));*/
 
 		if (tid >= *numParticles * 16 || blockIdx.x >= *numParticles) return;
 
-		//memcpy(localGrid, inGrid + blockIdx.x * localSize, sizeof(FlatMatrix) * localSize);
+		//memcpy(localGrid, inGrid + blockIdx.x * localSize, sizeof(Matrix44f) * localSize);
 
 		int i = tid / 16;
 		int j = tid % 16;
@@ -136,7 +136,7 @@ namespace CudaMath {
 		}*/
 	}
 
-	void MatMul44Batch_cpu(FlatMatrix* inGrid, FlatMatrix* B, FlatMatrix* outGrid, int numParticles)
+	void MatMul44Batch_cpu(Matrix44f* inGrid, Matrix44f* B, Matrix44f* outGrid, int numParticles)
 	{
 		int num_blocks = (numParticles * 16 + NUM_THREADS - 1) / NUM_THREADS;
 		int* numParticles_d;
@@ -162,8 +162,8 @@ namespace CudaMath {
 		{
 			srand((unsigned int)time(NULL));
 
-			FlatMatrix A[NUM_PARTICLES], B, C[NUM_PARTICLES];
-			FlatMatrix* A_d, * B_d, * C_d;
+			Matrix44f A[NUM_PARTICLES], B, C[NUM_PARTICLES];
+			Matrix44f* A_d, * B_d, * C_d;
 
 
 			glm::mat4 ref_mats[NUM_PARTICLES];
@@ -208,9 +208,9 @@ namespace CudaMath {
 				__debugbreak;
 			}
 
-			cudaMalloc((void**)&B_d, sizeof(FlatMatrix));
-			cudaMalloc((void**)&A_d, sizeof(FlatMatrix) * NUM_PARTICLES);
-			cudaMalloc((void**)&C_d, sizeof(FlatMatrix) * NUM_PARTICLES);
+			cudaMalloc((void**)&B_d, sizeof(Matrix44f));
+			cudaMalloc((void**)&A_d, sizeof(Matrix44f) * NUM_PARTICLES);
+			cudaMalloc((void**)&C_d, sizeof(Matrix44f) * NUM_PARTICLES);
 
 			cudaerr = cudaDeviceSynchronize();
 			if (cudaerr != cudaSuccess)
@@ -220,9 +220,9 @@ namespace CudaMath {
 				__debugbreak;
 			}
 
-			cudaMemcpy(B_d, &B, sizeof(FlatMatrix), cudaMemcpyHostToDevice);
-			cudaMemcpy(A_d, A, sizeof(FlatMatrix) * NUM_PARTICLES, cudaMemcpyHostToDevice);
-			cudaMemcpy(C_d, C, sizeof(FlatMatrix) * NUM_PARTICLES, cudaMemcpyHostToDevice);
+			cudaMemcpy(B_d, &B, sizeof(Matrix44f), cudaMemcpyHostToDevice);
+			cudaMemcpy(A_d, A, sizeof(Matrix44f) * NUM_PARTICLES, cudaMemcpyHostToDevice);
+			cudaMemcpy(C_d, C, sizeof(Matrix44f) * NUM_PARTICLES, cudaMemcpyHostToDevice);
 
 
 			int num_blocks = (NUM_PARTICLES * 16 + NUM_THREADS - 1) / NUM_THREADS;
@@ -236,8 +236,8 @@ namespace CudaMath {
 				exit(-1);
 			}
 
-			cudaMemcpy(A, A_d, sizeof(FlatMatrix) * NUM_PARTICLES, cudaMemcpyDeviceToHost);
-			cudaMemcpy(C, C_d, sizeof(FlatMatrix) * NUM_PARTICLES, cudaMemcpyDeviceToHost);
+			cudaMemcpy(A, A_d, sizeof(Matrix44f) * NUM_PARTICLES, cudaMemcpyDeviceToHost);
+			cudaMemcpy(C, C_d, sizeof(Matrix44f) * NUM_PARTICLES, cudaMemcpyDeviceToHost);
 
 
 			for (int k = 0; k < NUM_PARTICLES; k++)
@@ -276,7 +276,7 @@ namespace CudaMath {
 		}		
 	}
 
-	__global__ void MatMul44_gpu(FlatMatrix* A, FlatMatrix* B, FlatMatrix* C, int N)
+	__global__ void MatMul44_gpu(Matrix44f* A, Matrix44f* B, Matrix44f* C, int N)
 	{
 		int test = threadIdx.x;
 		printf("\nasdasdan");
@@ -301,9 +301,9 @@ namespace CudaMath {
 			srand((unsigned int)time(NULL));
 
 
-			FlatMatrix A, B, C;
+			Matrix44f A, B, C;
 			ZERO_FLAT_MATRIX(C);
-			FlatMatrix transMat;
+			Matrix44f transMat;
 			float x = (float)rand() / (float)(RAND_MAX / 55.0f);
 			float y = (float)rand() / (float)(RAND_MAX / 55.0f);
 			float z = (float)rand() / (float)(RAND_MAX / 55.0f);
@@ -322,7 +322,7 @@ namespace CudaMath {
 
 
 			glm::mat4 ref_trans = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
-			//FlatMatrix grid[4];
+			//Matrix44f grid[4];
 
 
 
@@ -379,9 +379,9 @@ namespace CudaMath {
 			srand((unsigned int)time(NULL));
 
 
-			FlatMatrix A, B, C;
+			Matrix44f A, B, C;
 			ZERO_FLAT_MATRIX(C);
-			FlatMatrix transMat;
+			Matrix44f transMat;
 			float x = (float)rand() / (float)(RAND_MAX / 55.0f);
 			float y = (float)rand() / (float)(RAND_MAX / 55.0f);
 			float z = (float)rand() / (float)(RAND_MAX / 55.0f);
@@ -392,18 +392,18 @@ namespace CudaMath {
 			Vector3f transVec{ x, y, z };
 			MAKE_TRANSLATION(A, transVec);
 
-			FlatMatrix* A_d, * B_d, * C_d;
+			Matrix44f* A_d, * B_d, * C_d;
 			//cudaMalloc((void**)&d_particles, common::ParticleData::num_particles * sizeof(common::particle_t));
-			cudaMalloc((void**)&A_d, sizeof(FlatMatrix));
-			cudaMalloc((void**)&B_d, sizeof(FlatMatrix));
-			cudaMalloc((void**)&C_d, sizeof(FlatMatrix));
+			cudaMalloc((void**)&A_d, sizeof(Matrix44f));
+			cudaMalloc((void**)&B_d, sizeof(Matrix44f));
+			cudaMalloc((void**)&C_d, sizeof(Matrix44f));
 
-			cudaMemcpy(A_d, (void*)&A, sizeof(FlatMatrix), cudaMemcpyHostToDevice);
-			cudaMemcpy(B_d, (void*)&B, sizeof(FlatMatrix), cudaMemcpyHostToDevice);
-			cudaMemcpy(C_d, (void*)&C, sizeof(FlatMatrix), cudaMemcpyHostToDevice);
+			cudaMemcpy(A_d, (void*)&A, sizeof(Matrix44f), cudaMemcpyHostToDevice);
+			cudaMemcpy(B_d, (void*)&B, sizeof(Matrix44f), cudaMemcpyHostToDevice);
+			cudaMemcpy(C_d, (void*)&C, sizeof(Matrix44f), cudaMemcpyHostToDevice);
 
 			glm::mat4 ref_mats;
-			//FlatMatrix grid[4];
+			//Matrix44f grid[4];
 
 
 			for (int j = 0; j < 16; j++)
@@ -474,9 +474,9 @@ namespace CudaMath {
 
 
 
-			cudaMemcpy((void*)&A, A_d, sizeof(FlatMatrix), cudaMemcpyDeviceToHost);
-			cudaMemcpy((void*)&B, B_d, sizeof(FlatMatrix), cudaMemcpyDeviceToHost);
-			cudaMemcpy((void*)&C, C_d, sizeof(FlatMatrix), cudaMemcpyDeviceToHost);
+			cudaMemcpy((void*)&A, A_d, sizeof(Matrix44f), cudaMemcpyDeviceToHost);
+			cudaMemcpy((void*)&B, B_d, sizeof(Matrix44f), cudaMemcpyDeviceToHost);
+			cudaMemcpy((void*)&C, C_d, sizeof(Matrix44f), cudaMemcpyDeviceToHost);
 
 
 
@@ -540,7 +540,7 @@ namespace CudaMath {
 		
 		int N = 4;
 
-		FlatMatrix A, B, C;
+		Matrix44f A, B, C;
 
 		ZERO_FLAT_MATRIX(C);
 		//Vector3f svec{ 0.5f,0.5,0.5f };
@@ -587,18 +587,18 @@ namespace CudaMath {
 	
 	
 
-	__global__ void MakeIdentity_gpu_glm(FlatMatrix* dest)
+	__global__ void MakeIdentity_gpu_glm(Matrix44f* dest)
 	{
 		printf("makeId\n");
 		glm::mat4 identity = glm::mat4(1.0f);
 		memcpy(dest->mat, glm::value_ptr(identity), sizeof(float) * 16);
 	}
-	__global__ void MakeTranslation_gpu_glm(FlatMatrix* dest, const glm::vec3& vec)
+	__global__ void MakeTranslation_gpu_glm(Matrix44f* dest, const glm::vec3& vec)
 	{
 		glm::mat4 source = glm::translate(glm::mat4(1.0f), vec);
 		memcpy(dest->mat, glm::value_ptr(source), sizeof(float) * 16);
 	}
-	__global__ void MakeScale_gpu_glm(FlatMatrix* dest, const glm::vec3& vec)
+	__global__ void MakeScale_gpu_glm(Matrix44f* dest, const glm::vec3& vec)
 	{
 		glm::mat4 source = glm::scale(glm::mat4(1.0f), vec);
 		memcpy(dest->mat, glm::value_ptr(source), sizeof(float) * 16);
@@ -609,7 +609,7 @@ namespace CudaMath {
 		printf("test identtityg\n");
 
 		glm::mat4 baseCase = glm::mat4(1.0f);
-		FlatMatrix myMat;
+		Matrix44f myMat;
 
 		MAKE_IDENTITY(myMat);
 		
@@ -635,7 +635,7 @@ namespace CudaMath {
 		printf("test trangs\n");
 
 		glm::mat4 baseCase = glm::translate(glm::mat4(1.0f), glm::vec3(7.0f, 5.0f,9.0f));
-		FlatMatrix myMat;
+		Matrix44f myMat;
 
 		/*myMat.rows[0] = Vector4f({ 1.0f, 0.0f, 0.0f, 0.0f });
 		myMat.rows[1] = Vector4f({ 0.0f, 1.0f, 0.0f, 0.0f });
@@ -661,7 +661,7 @@ namespace CudaMath {
 		printf("test scaleg\n");
 
 		glm::mat4 baseCase = glm::scale(glm::mat4(1.0f), glm::vec3(7.0f, 5.0f, 99.0f));
-		FlatMatrix myMat;
+		Matrix44f myMat;
 		Vector3f vec = Vector3f{ 7.0f,5.0f, 99.0f };
 		/*vec.x = 1.0f;
 		vec.y = 2.0f;
@@ -692,7 +692,7 @@ namespace CudaMath {
 
 	
 
-	void MakeIdentity_cpu(FlatMatrix* dest)
+	void MakeIdentity_cpu(Matrix44f* dest)
 	{
 		printf("makeId_cpu\n");
 		cudaDeviceSynchronize();
@@ -705,7 +705,7 @@ namespace CudaMath {
 
 
 
-	void MakeTranslation_cpu(FlatMatrix* dest, const glm::vec3& vec)
+	void MakeTranslation_cpu(Matrix44f* dest, const glm::vec3& vec)
 	{
 		printf("maketrans_cpu\n");
 		//cudaDeviceSynchronize();
@@ -715,7 +715,7 @@ namespace CudaMath {
 
 		//cudaDeviceSynchronize();
 	}
-	void MakeScale_cpu(FlatMatrix* dest, const glm::vec3& vec)
+	void MakeScale_cpu(Matrix44f* dest, const glm::vec3& vec)
 	{
 		printf("makescale_cpu\n");
 		//cudaDeviceSynchronize();

@@ -56,11 +56,11 @@ namespace Novaura {
 
 		glm::mat4* ModelMatrices_glm;
 
-		CudaMath::FlatMatrix* ModelMatrices;
+		CudaMath::Matrix44f* ModelMatrices;
 		
 		cudaGraphicsResource_t positionsVBO_CUDA = 0;
-		CudaMath::FlatMatrix* translationMatrices_d = nullptr;
-		CudaMath::FlatMatrix* scaleMatrix_d = nullptr;
+		CudaMath::Matrix44f* translationMatrices_d = nullptr;
+		CudaMath::Matrix44f* scaleMatrix_d = nullptr;
 	
 		unsigned int MaxCircles;
 		const unsigned int InstancedIndexCount = 6;
@@ -648,23 +648,23 @@ namespace Novaura {
 		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(InstancedVertexData), (void*)offsetof(InstancedVertexData, Color));
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_RenderData.ebo);
 
-		//s_RenderData.ModelMatrices = new CudaMath::FlatMatrix[s_RenderData.MaxCircles];
+		//s_RenderData.ModelMatrices = new CudaMath::Matrix44f[s_RenderData.MaxCircles];
 
 		glBindBuffer(GL_ARRAY_BUFFER, s_RenderData.instanceVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(CudaMath::FlatMatrix) * amount, 0, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(CudaMath::Matrix44f) * amount, 0, GL_DYNAMIC_DRAW);
 		//CudaGLInterop::RegisterCudaGLBuffer(s_RenderData.positionsVBO_CUDA, &s_RenderData.instanceVBO);
 		cudaGraphicsGLRegisterBuffer(&s_RenderData.positionsVBO_CUDA, s_RenderData.instanceVBO, cudaGraphicsRegisterFlagsWriteDiscard);
 
 		//glBindVertexArray(s_RenderData.sphereVAO);
 
 		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(CudaMath::FlatMatrix), (void*)0);
+		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(CudaMath::Matrix44f), (void*)0);
 		glEnableVertexAttribArray(3);
-		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(CudaMath::FlatMatrix), (void*)(sizeof(CudaMath::Vector4f)));
+		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(CudaMath::Matrix44f), (void*)(sizeof(CudaMath::Vector4f)));
 		glEnableVertexAttribArray(4);
-		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(CudaMath::FlatMatrix), (void*)(2 * sizeof(CudaMath::Vector4f)));
+		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(CudaMath::Matrix44f), (void*)(2 * sizeof(CudaMath::Vector4f)));
 		glEnableVertexAttribArray(5);
-		glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(CudaMath::FlatMatrix), (void*)(3 * sizeof(CudaMath::Vector4f)));
+		glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(CudaMath::Matrix44f), (void*)(3 * sizeof(CudaMath::Vector4f)));
 
 		glVertexAttribDivisor(2, 1);
 		glVertexAttribDivisor(3, 1);
@@ -674,13 +674,13 @@ namespace Novaura {
 		glBindVertexArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);		
 
-		CudaMath::FlatMatrix scaleMatrix;
+		CudaMath::Matrix44f scaleMatrix;
 
 		MAKE_SCALE(scaleMatrix, scale);
-		cudaMalloc((void**)&s_RenderData.scaleMatrix_d, sizeof(CudaMath::FlatMatrix));
-		cudaMemcpy(s_RenderData.scaleMatrix_d, &scaleMatrix, sizeof(CudaMath::FlatMatrix), cudaMemcpyHostToDevice);		
+		cudaMalloc((void**)&s_RenderData.scaleMatrix_d, sizeof(CudaMath::Matrix44f));
+		cudaMemcpy(s_RenderData.scaleMatrix_d, &scaleMatrix, sizeof(CudaMath::Matrix44f), cudaMemcpyHostToDevice);		
 
-		cudaMalloc((void**)&s_RenderData.translationMatrices_d, sizeof(CudaMath::FlatMatrix) * amount);
+		cudaMalloc((void**)&s_RenderData.translationMatrices_d, sizeof(CudaMath::Matrix44f) * amount);
 
 
 	}
@@ -692,10 +692,10 @@ namespace Novaura {
 		if (num_particles != s_RenderData.MaxCircles) spdlog::error(__FUNCTION__,' ', __LINE__);
 
 		size_t num_bytes;
-		CudaMath::FlatMatrix* resultMatrices = nullptr;
+		CudaMath::Matrix44f* resultMatrices = nullptr;
 		cudaGraphicsMapResources(1, &s_RenderData.positionsVBO_CUDA, 0);
 		cudaGraphicsResourceGetMappedPointer((void**)&resultMatrices, &num_bytes, s_RenderData.positionsVBO_CUDA);
-		if (num_bytes != s_RenderData.MaxCircles * sizeof(CudaMath::FlatMatrix))
+		if (num_bytes != s_RenderData.MaxCircles * sizeof(CudaMath::Matrix44f))
 			spdlog::info("bytes dont match updatematriucesinterop");
 		
 		CudaMath::MakeTranslationMatrices_cpu(s_RenderData.translationMatrices_d, particles_gpu, num_particles);
