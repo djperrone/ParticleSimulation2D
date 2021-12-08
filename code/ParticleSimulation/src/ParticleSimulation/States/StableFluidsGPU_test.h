@@ -13,14 +13,17 @@
 #include "FinalCode/fluid.h"
 #include "FinalCode/utilities.h"
 
+#include "CudaSrc/FinalCuda/Fluid.cuh"
+
+
 namespace ParticleSimulation {
 
 
-	class SerialCPU_final : public Novaura::State
+	class StableFluidsGPU_test : public Novaura::State
 	{
 	public:
-		SerialCPU_final();		
-		SerialCPU_final(std::shared_ptr<Novaura::Window> window, std::shared_ptr<Novaura::CameraController> cameraController, std::shared_ptr<Novaura::StateMachine> stateMachine);
+		StableFluidsGPU_test();		
+		StableFluidsGPU_test(std::shared_ptr<Novaura::Window> window, std::shared_ptr<Novaura::CameraController> cameraController, std::shared_ptr<Novaura::StateMachine> stateMachine);
 		
 		virtual void OnEnter() override;
 
@@ -40,25 +43,19 @@ namespace ParticleSimulation {
 		double m_PreviousTime = 0.0;
 		float particleScale = 0.03f;
 
-		StateInfo m_StateInfo;
-
-
-		common::particle_t* particles;
-		//int n;
-		double simulation_time;
-		int navg, nabsavg = 0;
-		double davg, dmin, absmin = 1.0, absavg = 0.0;
+		StateInfo m_StateInfo;	
+	
 
 		std::unique_ptr<Pgui::Gui> m_Gui;
 
 		// final
-		StableFluids::FluidSquare* sq;
+		StableFluidsCuda::FluidSquare sq;
+		StableFluidsCuda::FluidSquare sq_cpu;
 
 		int n = 2000;
 		float d = 0;
 		float v = .00001;
 		float dt = .005;
 		int n_per_side;
-
 	};
 }

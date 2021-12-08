@@ -1,10 +1,11 @@
+#pragma once
 #include <glm/glm.hpp>
 //#define IX(x, y) (x + y*N)
 #define IX(x, y) (glm::clamp(x,0,N-1) + glm::clamp(y,0,N-1)*N)
 
 namespace StableFluids {
 
-    typedef struct FluidSquare {
+    typedef struct {
         int size;
         float dt;
         float diff;

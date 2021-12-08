@@ -54,7 +54,6 @@ namespace StableFluids {
     void FluidSquareAddVelocity(FluidSquare* sq, int x, int y, float amountX, float amountY) {
         //spdlog::info(__FUNCTION__);
 
-
         int N = sq->size;
         int index = IX(x, y);
 
@@ -63,8 +62,6 @@ namespace StableFluids {
     }
 
     void FluidSquareStep(FluidSquare* sq) {
-        //spdlog::info(__FUNCTION__);
-
 
         int N = sq->size;
         float visc = sq->visc;

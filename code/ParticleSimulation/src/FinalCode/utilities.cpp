@@ -7,6 +7,7 @@
 #include "fluid.h"
 
 namespace StableFluids {
+    
 
     void set_bnd(int b, float* x, int N) {
          //spdlog::info(__FUNCTION__);
@@ -99,7 +100,6 @@ namespace StableFluids {
         float ifloat, jfloat;
         int i, j;
 
-
         for (j = 1, jfloat = 1; j < N - 1; j++, jfloat++) {
             for (i = 1, ifloat = 1; i < N - 1; i++, ifloat++) {
                 tmp1 = dtx * velocX[IX(i, j)];
@@ -125,7 +125,6 @@ namespace StableFluids {
                 int i1i = i1;
                 int j0i = j0;
                 int j1i = j1;
-
 
                 d[IX(i, j)] =
                     s0 * (t0 * d0[IX(i0i, j0i)] + t1 * d0[IX(i0i, j1i)])

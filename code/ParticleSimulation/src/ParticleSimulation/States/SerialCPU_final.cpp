@@ -145,7 +145,7 @@ namespace ParticleSimulation {
 				//float addDensity = Novaura::Random::Float(0.0f, 1000.f);
 				float addDensity =5.0f;
 				float addVelocityx = glm::sin(glfwGetTime()) * Novaura::Random::Float(-0.2f, 0.2f);
-				float addVelocityy = glm::sin(glfwGetTime());// *Novaura::Random::Float(-0.2f, 0.2f);
+				float addVelocityy = -glm::sin(glfwGetTime());// *Novaura::Random::Float(-0.2f, 0.2f);
 				if (i == n_per_side / 2 && j == n_per_side / 2)
 				{
 					StableFluids::FluidSquareAddDensity(sq, i, j, addDensity);
@@ -155,7 +155,7 @@ namespace ParticleSimulation {
 				}
 				//Novaura::BatchRenderer::DrawCircle(glm::vec3(particles[i].x - 1.5f, particles[i].y - 0.75, 0), glm::vec3(particleScale, particleScale, 0), glm::vec4(0.8f, 0.2f, 0.2f, 1.0f), glm::vec2(1.0f, 1.0f));
 					//Novaura::BatchRenderer::DrawCircle(glm::vec3(sq->Vx[i + j * n_per_side], sq->Vy[i + j * n_per_side], 0.0f), glm::vec3(particleScale, particleScale, 0), glm::vec4(0.8f, 0.2f, 0.2f, 1.0f), glm::vec2(1.0f, 1.0f));
-				Novaura::BatchRenderer::DrawRectangle(glm::vec3(x, y, 0.0f), glm::vec3(particleScale, particleScale, 0), glm::vec4(0.0f,0.0f, glm::clamp(d,0.2f,1.0f), 100.0f/255.0f), glm::vec2(1.0f, 1.0f));
+				Novaura::BatchRenderer::DrawRectangle(glm::vec3(x, y, 0.0f), glm::vec3(particleScale, particleScale, 0), glm::vec4(0.8f,0.1f, 0.1f, glm::clamp(d,0.0f,1.0f )), glm::vec2(1.0f, 1.0f));
 			}
 			// cool
 			//float addDensity = Novaura::Random::Float(0.0f, 25.f);
