@@ -46,9 +46,11 @@ namespace StableFluids {
     void FluidSquareAddDensity(FluidSquare* sq, int x, int y, float amount) {
         //spdlog::info(__FUNCTION__);
         
-
+       // printf("cpu add density amount = %f\n", amount);
         int N = sq->size;
         sq->density[IX(x, y)] += amount;
+       // printf("123cpu add density amount = %f\n", sq->density[IX(x, y)]);
+
     }
 
     void FluidSquareAddVelocity(FluidSquare* sq, int x, int y, float amountX, float amountY) {
@@ -62,7 +64,7 @@ namespace StableFluids {
     }
 
     void FluidSquareStep(FluidSquare* sq) {
-
+        
         int N = sq->size;
         float visc = sq->visc;
         float diff = sq->diff;
@@ -75,7 +77,7 @@ namespace StableFluids {
         float* density = sq->density;
 
         diffuse(1, Vx0, Vx, visc, dt, 4, N);
-        diffuse(2, Vy0, Vy, visc, dt, 4, N);
+       /* diffuse(2, Vy0, Vy, visc, dt, 4, N);
 
         project(Vx0, Vy0, Vx, Vy, 4, N);
 
@@ -85,6 +87,6 @@ namespace StableFluids {
         project(Vx, Vy, Vx0, Vy0, 4, N);
 
         diffuse(0, density0, density, diff, dt, 4, N);
-        advect(0, density, density0, Vx, Vy, dt, N);
+        advect(0, density, density0, Vx, Vy, dt, N);*/
     }
 }

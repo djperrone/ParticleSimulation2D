@@ -19,11 +19,11 @@
 namespace ParticleSimulation {
 
 
-	class StableFluidsGPU_test : public Novaura::State
+	class StableFluidsGPU_test2 : public Novaura::State
 	{
 	public:
-		StableFluidsGPU_test();		
-		StableFluidsGPU_test(std::shared_ptr<Novaura::Window> window, std::shared_ptr<Novaura::CameraController> cameraController, std::shared_ptr<Novaura::StateMachine> stateMachine);
+		StableFluidsGPU_test2();		
+		StableFluidsGPU_test2(std::shared_ptr<Novaura::Window> window, std::shared_ptr<Novaura::CameraController> cameraController, std::shared_ptr<Novaura::StateMachine> stateMachine);
 		
 		virtual void OnEnter() override;
 
@@ -36,6 +36,7 @@ namespace ParticleSimulation {
 		virtual void Pause() override;
 		virtual void Resume() override;
 
+		void Debug();
 	
 	private:		
 
@@ -48,10 +49,8 @@ namespace ParticleSimulation {
 
 		std::unique_ptr<Pgui::Gui> m_Gui;
 
-		// final
 		StableFluidsCuda::FluidSquare sq;
 		StableFluidsCuda::FluidSquare sq_cpu;
-
 		StableFluids::FluidSquare* sq_test;
 
 

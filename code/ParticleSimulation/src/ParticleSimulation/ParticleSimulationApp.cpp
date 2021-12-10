@@ -11,6 +11,7 @@
 #include "States/SerialCPU.h"
 #include "States/SerialCPU_final.h"
 #include "States/StableFluidsGPU_test.h"
+#include "States/StableFluidsGPU_test2.h"
 
 namespace ParticleSimulation {
 	ParticleSimulationApp::ParticleSimulationApp()
@@ -24,7 +25,8 @@ namespace ParticleSimulation {
 		//m_StateMachine->PushState(std::make_unique<BinnedCPU>(GetWindow(), m_CameraController, m_StateMachine));
 	//	m_StateMachine->PushState(std::make_unique<InstancedBinnedCPU>(GetWindow(), m_CameraController, m_StateMachine));
 		//m_StateMachine->PushState(std::make_unique<InstancedBinnedGPU>(GetWindow(), m_CameraController, m_StateMachine));
-		m_StateMachine->PushState(std::make_unique<StableFluidsGPU_test>(GetWindow(), m_CameraController, m_StateMachine));
+		//m_StateMachine->PushState(std::make_unique<StableFluidsGPU_test>(GetWindow(), m_CameraController, m_StateMachine));
+		m_StateMachine->PushState(std::make_unique<StableFluidsGPU_test2>(GetWindow(), m_CameraController, m_StateMachine));
 		//m_StateMachine->PushState(std::make_unique<InstancedBinnedGPU_final>(GetWindow(), m_CameraController, m_StateMachine));
 		//m_StateMachine->PushState(std::make_unique<SerialCPU_final>(GetWindow(), m_CameraController, m_StateMachine));
 		//m_StateMachine->PushState(std::make_unique<InstancedBinnedGPU_glm>(GetWindow(), m_CameraController, m_StateMachine));
