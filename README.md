@@ -1,6 +1,10 @@
+
 # ParticleSimulation2D
 
-![image](https://github.com/djperrone/ParticleSimulation2D/blob/main/sample_img/sample.JPG)
+<p align="center">
+
+<img src="https://github.com/djperrone/ParticleSimulation2D/blob/main/sample_img/sample.JPG" width="512"/>
+</p>
 
 Rendering a particle simulation homework assignment from my parallel computing course.  This was mainly a large test-run for my stable fluids project as I tested using cuda, opengl-cuda interop, and instanced rendering.  This is more difficult to run than Stable Fluids because the cu and cuh files must be manually included and they are spread throughout several folders (something I addressed in Stable Fluids by consolidating them).  
 
